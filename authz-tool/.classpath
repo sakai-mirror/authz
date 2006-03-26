@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="api/src/java"/>
+	<classpathentry excluding="**/.DS_Store" kind="src" path="tool/src/java"/>
 	<classpathentry sourcepath="JRE_SRC" kind="var" path="JRE_LIB"/>
 	<classpathentry kind="var" path="MAVEN_REPO/commons-logging/jars/commons-logging-1.0.4.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/component"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/authz"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/util"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
