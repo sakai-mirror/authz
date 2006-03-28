@@ -6,7 +6,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/component-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/authz-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/util"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/legacy"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/velocity"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/entity-api"/>
 	<classpathentry kind="var" path="MAVEN_REPO/servletapi/jars/servletapi-2.4.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/webapp-api"/>
