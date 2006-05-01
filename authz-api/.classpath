@@ -5,7 +5,7 @@
 	<classpathentry kind="var" path="MAVEN_REPO/commons-logging/jars/commons-logging-1.0.4.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/component-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/entity-api"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/util"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/user-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/util-api"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
