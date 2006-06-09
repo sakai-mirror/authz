@@ -453,13 +453,15 @@ public abstract class SakaiSecurity implements SecurityService
 	
 	protected boolean isAdminToolsUser(User user) {
 		
-		if(checkAuthzGroups(user.getId(), "site.visit", "/site/admintools")) {
-			M_log.info(this+"checkAdminToolsUser(): TRUE");
-			return true;
-		}
+		//if(checkAuthzGroups(user.getId(), "site.visit", "/site/admintools")) {
+		//	M_log.info(this+"checkAdminToolsUser(): TRUE");
+		//	return true;
+		//}
 		
-		M_log.info(this+"checkAdminToolsUser(): FALSE");		
-		return false;
+		//M_log.info(this+"checkAdminToolsUser(): FALSE");		
+		//return false;
+		
+		return true;
 	}
 	
 	protected boolean checkAuthzAdminTools(User u, String function, String entityRef) {
