@@ -1,0 +1,625 @@
+/**********************************************************************************
+ * $URL: https://source.sakaiproject.org/svn/authz/trunk/authz-impl/impl/src/java/org/sakaiproject/authz/impl/SakaiSecurity.java $
+ * $Id: SakaiSecurity.java 9197 2006-05-09 19:53:26Z ggolden@umich.edu $
+ ***********************************************************************************
+ *
+ * Copyright (c) 2003, 2004, 2005, 2006 The Sakai Foundation.
+ * 
+ * Licensed under the Educational Community License, Version 1.0 (the "License"); 
+ * you may not use this file except in compliance with the License. 
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.opensource.org/licenses/ecl1.php
+ * 
+ * Unless required by applicable law or agreed to in writing, software 
+ * distributed under the License is distributed on an "AS IS" BASIS, 
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+ * See the License for the specific language governing permissions and 
+ * limitations under the License.
+ *
+ **********************************************************************************/
+
+package org.sakaiproject.authz.impl;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Stack;
+import java.util.Vector;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.sakaiproject.authz.api.AuthzGroupService;
+import org.sakaiproject.authz.api.SecurityAdvisor;
+import org.sakaiproject.authz.api.SecurityService;
+import org.sakaiproject.entity.api.EntityManager;
+import org.sakaiproject.entity.api.Reference;
+import org.sakaiproject.memory.api.MemoryService;
+import org.sakaiproject.memory.api.MultiRefCache;
+import org.sakaiproject.thread_local.api.ThreadLocalManager;
+import org.sakaiproject.user.api.User;
+import org.sakaiproject.user.api.UserDirectoryService;
+
+/**
+ * <p>
+ * SakaiSecurity is a Sakai security service.
+ * </p>
+ */
+public abstract class SakaiSecurity implements SecurityService
+{
+	/** Our logger. */
+	private static Log M_log = LogFactory.getLog(SakaiSecurity.class);
+
+	/** A cache of calls to the service and the results. */
+	protected MultiRefCache m_callCache = null;
+
+	/** ThreadLocalManager key for our SecurityAdvisor Stack. */
+	protected final static String ADVISOR_STACK = "SakaiSecurity.advisor.stack";
+
+	/**********************************************************************************************************************************************************************************************************************************************************
+	 * Dependencies, configuration, and their setter methods
+	 *********************************************************************************************************************************************************************************************************************************************************/
+
+	/**
+	 * @return the ThreadLocalManager collaborator.
+	 */
+	protected abstract ThreadLocalManager threadLocalManager();
+
+	/**
+	 * @return the AuthzGroupService collaborator.
+	 */
+	protected abstract AuthzGroupService authzGroupService();
+
+	/**
+	 * @return the UserDirectoryService collaborator.
+	 */
+	protected abstract UserDirectoryService userDirectoryService();
+
+	/**
+	 * @return the MemoryService collaborator.
+	 */
+	protected abstract MemoryService memoryService();
+
+	/**
+	 * @return the EntityManager collaborator.
+	 */
+	protected abstract EntityManager entityManager();
+
+	/**********************************************************************************************************************************************************************************************************************************************************
+	 * Configuration
+	 *********************************************************************************************************************************************************************************************************************************************************/
+
+	/** The # minutes to cache the security answers. 0 disables the cache. */
+	protected int m_cacheMinutes = 3;
+
+	/**
+	 * Set the # minutes to cache a security answer.
+	 * 
+	 * @param time
+	 *        The # minutes to cache a security answer (as an integer string).
+	 */
+	public void setCacheMinutes(String time)
+	{
+		m_cacheMinutes = Integer.parseInt(time);
+	}
+
+	/**********************************************************************************************************************************************************************************************************************************************************
+	 * Init and Destroy
+	 *********************************************************************************************************************************************************************************************************************************************************/
+
+	/**
+	 * Final initialization, once all dependencies are set.
+	 */
+	public void init()
+	{
+		// <= 0 minutes indicates no caching desired
+		if (m_cacheMinutes > 0)
+		{
+			// build a synchronized map for the call cache, automatiaclly checking for expiration every 15 mins.
+			m_callCache = memoryService().newMultiRefCache(15 * 60);
+		}
+
+		M_log.info("init() - caching minutes: " + m_cacheMinutes);
+	}
+
+	/**
+	 * Final cleanup.
+	 */
+	public void destroy()
+	{
+		M_log.info("destroy()");
+	}
+
+	/**********************************************************************************************************************************************************************************************************************************************************
+	 * SecurityService implementation
+	 *********************************************************************************************************************************************************************************************************************************************************/
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public boolean isSuperUser()
+	{
+		return isSuperUser(userDirectoryService().getCurrentUser());
+	}
+
+	/**
+	 * Is this a super special super (admin or postmaster) user?
+	 * 
+	 * @return true, if the user is a cut above the rest, false if a mere mortal.
+	 */
+	protected boolean isSuperUser(User user)
+	{
+		// if no user or the no-id user (i.e. the anon user)
+		if ((user == null) || (user.getId().length() == 0)) return false;
+
+		// check the cache
+		String command = "super@" + user.getId();
+		if ((m_callCache != null) && (m_callCache.containsKey(command)))
+		{
+			boolean rv = ((Boolean) m_callCache.get(command)).booleanValue();
+			return rv;
+		}
+
+		boolean rv = false;
+
+		// these known ids are super
+		if (UserDirectoryService.ADMIN_ID.equalsIgnoreCase(user.getId()))
+		{
+			rv = true;
+		}
+
+		else if ("postmaster".equalsIgnoreCase(user.getId()))
+		{
+			rv = true;
+		}
+
+		// if the user has site modification rights in the "!admin" site, welcome aboard!
+		else
+		{
+			// TODO: stolen from site -ggolden
+			if (authzGroupService().isAllowed(user.getId(), "site.upd", "/site/!admin"))
+			{
+				rv = true;
+			}
+		}
+
+		// cache
+		if (m_callCache != null)
+		{
+			Collection azgIds = new Vector();
+			azgIds.add("/site/!admin");
+			m_callCache.put(command, Boolean.valueOf(rv), m_cacheMinutes * 60, null, azgIds);
+		}
+
+		return rv;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public boolean unlock(String lock, String resource)
+	{
+		return unlock(null, lock, resource);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public boolean unlock(User u, String function, String entityRef)
+	{
+		// pick up the current user if needed
+		User user = u;
+		if (user == null)
+		{
+			user = userDirectoryService().getCurrentUser();
+		}
+
+		// make sure we have complete parameters
+		if (user == null || function == null || entityRef == null)
+		{
+			M_log.warn("unlock(): null: " + user + " " + function + " " + entityRef);
+			return false;
+		}
+
+		// if super, grant
+		if (isSuperUser(user))
+		{
+			return true;
+		}
+
+		// let the advisors have a crack at it, if we have any
+		// Note: this cannot be cached without taking into consideration the exact advisor configuration -ggolden
+		if (hasAdvisors())
+		{
+			SecurityAdvisor.SecurityAdvice advice = adviseIsAllowed(user.getId(), function, entityRef);
+			if (advice != SecurityAdvisor.SecurityAdvice.PASS)
+			{
+				return advice == SecurityAdvisor.SecurityAdvice.ALLOWED;
+			}
+		}
+		
+		// IU Oncourse CL - check to see if this user is authorized by AdminTools
+		if(isAdminToolsUser(user)) {
+			
+			M_log.info(this+"checkAdminToolsUser(): TRUE");
+			
+			if(checkAuthzAdminTools(user, function, entityRef)) {
+				
+				M_log.info(this+"checkAuthzAdminTools(): TRUE");
+				return true;
+			}
+			
+		}
+		// END IU
+
+		// check with the AuthzGroups appropriate for this entity
+		return checkAuthzGroups(user.getId(), function, entityRef);
+	}
+
+	/**
+	 * Check the appropriate AuthzGroups for the answer - this may be cached
+	 * 
+	 * @param userId
+	 *        The user id.
+	 * @param function
+	 *        The security function.
+	 * @param entityRef
+	 *        The entity reference string.
+	 * @return true if allowed, false if not.
+	 */
+	protected boolean checkAuthzGroups(String userId, String function, String entityRef)
+	{
+		// check the cache
+		String command = "unlock@" + userId + "@" + function + "@" + entityRef;
+		if ((m_callCache != null) && (m_callCache.containsKey(command)))
+		{
+			boolean rv = ((Boolean) m_callCache.get(command)).booleanValue();
+			return rv;
+		}
+
+		// make a reference for the entity
+		Reference ref = entityManager().newReference(entityRef);
+
+		// get this entity's AuthzGroups
+		Collection azgs = ref.getRealms();
+		boolean rv = authzGroupService().isAllowed(userId, function, azgs);
+
+		// cache
+		if (m_callCache != null) m_callCache.put(command, Boolean.valueOf(rv), m_cacheMinutes * 60, entityRef, azgs);
+
+		return rv;
+	}
+
+	/**
+	 * Access the List the Users who can unlock the lock for use with this resource.
+	 * 
+	 * @param lock
+	 *        The lock id string.
+	 * @param reference
+	 *        The resource reference string.
+	 * @return A List (User) of the users can unlock the lock (may be empty).
+	 */
+	public List unlockUsers(String lock, String reference)
+	{
+		if (reference == null)
+		{
+			M_log.warn("unlockUsers(): null resource: " + lock);
+			return new Vector();
+		}
+
+		// make a reference for the resource
+		Reference ref = entityManager().newReference(reference);
+
+		// get this resource's Realms
+		Collection realms = ref.getRealms();
+
+		// get the users who can unlock in these realms
+		List ids = new Vector();
+		ids.addAll(authzGroupService().getUsersIsAllowed(lock, realms));
+
+		// convert the set of Users into a sorted list of users
+		List users = userDirectoryService().getUsers(ids);
+		Collections.sort(users);
+
+		return users;
+	}
+
+	/**********************************************************************************************************************************************************************************************************************************************************
+	 * SecurityAdvisor Support
+	 *********************************************************************************************************************************************************************************************************************************************************/
+
+	/**
+	 * Get the thread-local security advisor stack, possibly creating it
+	 * 
+	 * @param force
+	 *        if true, create if missing
+	 */
+	protected Stack getAdvisorStack(boolean force)
+	{
+		Stack advisors = (Stack) threadLocalManager().get(ADVISOR_STACK);
+		if ((advisors == null) && force)
+		{
+			advisors = new Stack();
+			threadLocalManager().set(ADVISOR_STACK, advisors);
+		}
+
+		return advisors;
+	}
+
+	/**
+	 * Remove the thread-local security advisor stack
+	 */
+	protected void dropAdvisorStack()
+	{
+		threadLocalManager().set(ADVISOR_STACK, null);
+	}
+
+	/**
+	 * Check the advisor stack - if anyone declares ALLOWED or NOT_ALLOWED, stop and return that, else, while they PASS, keep checking.
+	 * 
+	 * @param userId
+	 *        The user id.
+	 * @param function
+	 *        The security function.
+	 * @param reference
+	 *        The Entity reference.
+	 * @return ALLOWED or NOT_ALLOWED if an advisor makes a decision, or PASS if there are no advisors or they cannot make a decision.
+	 */
+	protected SecurityAdvisor.SecurityAdvice adviseIsAllowed(String userId, String function, String reference)
+	{
+		Stack advisors = getAdvisorStack(false);
+		if ((advisors == null) || (advisors.isEmpty())) return SecurityAdvisor.SecurityAdvice.PASS;
+
+		// a Stack grows to the right - process from top to bottom
+		for (int i = advisors.size() - 1; i >= 0; i--)
+		{
+			SecurityAdvisor advisor = (SecurityAdvisor) advisors.elementAt(i);
+
+			SecurityAdvisor.SecurityAdvice advice = advisor.isAllowed(userId, function, reference);
+			if (advice != SecurityAdvisor.SecurityAdvice.PASS)
+			{
+				return advice;
+			}
+		}
+
+		return SecurityAdvisor.SecurityAdvice.PASS;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public void pushAdvisor(SecurityAdvisor advisor)
+	{
+		Stack advisors = getAdvisorStack(true);
+		advisors.push(advisor);
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public SecurityAdvisor popAdvisor()
+	{
+		Stack advisors = getAdvisorStack(false);
+		if (advisors == null) return null;
+
+		SecurityAdvisor rv = null;
+
+		if (advisors.size() > 0)
+		{
+			rv = (SecurityAdvisor) advisors.pop();
+		}
+
+		if (advisors.isEmpty())
+		{
+			dropAdvisorStack();
+		}
+
+		return rv;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public boolean hasAdvisors()
+	{
+		Stack advisors = getAdvisorStack(false);
+		if (advisors == null) return false;
+
+		return !advisors.isEmpty();
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public void clearAdvisors()
+	{
+		dropAdvisorStack();
+	}
+	
+	
+	protected boolean isAdminToolsUser(User user) {
+		
+		if(checkAuthzGroups(user.getId(), "site.visit", "/site/admintools")) {
+			M_log.info(this+"checkAdminToolsUser(): TRUE");
+			return true;
+		}
+		
+		M_log.info(this+"checkAdminToolsUser(): FALSE");		
+		return false;
+	}
+	
+	protected boolean checkAuthzAdminTools(User u, String function, String entityRef) {
+		
+		String userId = u.getId();
+		
+		M_log.info(this+" checkAuthzAdminTools: userId: "+userId+ " function: "+function+" entityRef: "+entityRef);
+		
+		if(!entityRef.substring(0,6).equals("/site/")) {
+			
+		Reference ref = null;
+	
+			String refParts[] = entityRef.split("/");
+			
+			if(refParts.length > 3) {
+				
+				if(entityRef.substring(0,7).equals("/realm/")) {
+					
+					return unlock(u, "site.upd", "/site/"+refParts[4]);
+					
+				} else {
+				
+					return unlock(u, "site.upd", "/site/"+refParts[3]);
+				
+				}
+			}
+			
+			return false;
+			
+		}
+		
+		String siteId = entityRef.replaceFirst("/site/","");
+	
+		Site site = null;
+		
+	    try {
+			site = SiteService.getSite(siteId);
+		} catch (IdUnusedException e) {
+			m_logger.error(this+": IdUnusedException: "+e);
+			return false;
+		}	
+	
+		ResourceProperties properties = site.getProperties();
+		
+		String classicId = properties.getProperty("site-oncourse-course-id");
+		String adminAuthorization = properties.getProperty("oncourse-admin-authorization");
+		
+		if(classicId == null && adminAuthorization == null) {
+			
+			return false;
+			
+		}
+		
+		String adminCampusList = null;
+		String adminDeptList = null;
+		
+		String sql = "SELECT CAMPUS,DEPT FROM ADMIN_RIGHTS WHERE USER_ID = '"+userId+"'";
+
+		Connection conn;
+		try {
+			conn = getOncourseConnection();
+			
+			Statement statement = conn.createStatement();
+			
+			ResultSet result = statement.executeQuery(sql);
+			
+			if(result.next()) {
+				
+				adminCampusList = result.getString("CAMPUS");
+				adminDeptList = result.getString("DEPT");
+				
+				
+			} else {
+				
+				return false;
+				
+			}
+			
+		
+	    result.close();
+		statement.close();
+		conn.close();
+			
+		} catch (SQLException e) {
+			m_logger.error("SQLException: "+e);
+			return false;
+		}
+		
+		M_log.info(this+" checkAuthzAdminTools: classicId: "+classicId);
+		M_log.info(this+" checkAuthzAdminTools: adminCampusList: "+adminCampusList);
+		M_log.info(this+" checkAuthzAdminTools: adminDeptList: "+adminDeptList);
+		
+		String courseCampus = null;
+		String courseDept = null;
+		
+		if(classicId != null) {
+		
+			String classicIdList[] = classicId.split("-");
+	
+		
+			courseCampus = classicIdList[2];
+			courseDept = classicIdList[3];
+		} else {
+			
+			String adminAuthList[] = adminAuthorization.split("-");
+			
+			courseCampus = adminAuthList[0];
+			courseDept = adminAuthList[1];
+			
+		}
+		
+		
+		String adminCampus[] = adminCampusList.split(",");
+		String adminDept[]   = adminDeptList.split(",");
+		
+		
+		
+		for(int i=0; i < adminCampus.length; i++) {
+			
+			for(int j=0; j < adminDept.length; j++) {
+				
+				
+				M_log.info(this+" checkAuthzAdminTools: try to match: "+adminCampus[i]+"-"+adminDept[j]);
+
+				if(adminCampus[i].equals(courseCampus) || "%".equals(adminCampus[i])) {
+					
+					if(adminDept[j].equals(courseDept) || "%".equals(adminDept[j])) {
+			
+					
+						M_log.info(this+" checkAuthzAdminTools: MATCH");
+					    return true;
+					}
+					
+				}
+				
+			}
+			
+			
+		}
+		
+		
+		
+		return false;
+		
+	}
+
+	private Connection getOncourseConnection() throws SQLException {
+		
+	    
+		
+		String driver = ServerConfigurationService.getString("oncourse.driver");
+		String connect = ServerConfigurationService.getString("oncourse.connect.ocsystem");
+		String user = ServerConfigurationService.getString("oncourse.user");
+		String password = ServerConfigurationService.getString("oncourse.pw");
+
+		try {
+			Class.forName(driver).newInstance();
+		} catch (Exception e1) {
+			M_log.error(this+": error registering MSSQL JDBC driver: "+e1);
+		}
+
+		
+
+
+		return DriverManager.getConnection(connect, user, password);
+		
+		
+		
+	}
+
+	
+}
