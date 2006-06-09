@@ -31,19 +31,28 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.AuthzGroupService;
 import org.sakaiproject.authz.api.SecurityAdvisor;
 import org.sakaiproject.authz.api.SecurityService;
+import org.sakaiproject.component.cover.ServerConfigurationService;
 import org.sakaiproject.entity.api.EntityManager;
 import org.sakaiproject.entity.api.Reference;
+import org.sakaiproject.entity.api.ResourceProperties;
+import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.memory.api.MemoryService;
 import org.sakaiproject.memory.api.MultiRefCache;
 import org.sakaiproject.thread_local.api.ThreadLocalManager;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
+
+import org.sakaiproject.site.api.Site;
+import org.sakaiproject.site.cover.SiteService;
+
+
 
 /**
  * <p>
@@ -489,7 +498,7 @@ public abstract class SakaiSecurity implements SecurityService
 	    try {
 			site = SiteService.getSite(siteId);
 		} catch (IdUnusedException e) {
-			m_logger.error(this+": IdUnusedException: "+e);
+			M_log.error(this+": IdUnusedException: "+e);
 			return false;
 		}	
 	
@@ -535,7 +544,7 @@ public abstract class SakaiSecurity implements SecurityService
 		conn.close();
 			
 		} catch (SQLException e) {
-			m_logger.error("SQLException: "+e);
+			M_log.error("SQLException: "+e);
 			return false;
 		}
 		
