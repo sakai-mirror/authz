@@ -252,22 +252,29 @@ public abstract class SakaiSecurity implements SecurityService
 			}
 		}
 		
-		// IU Oncourse CL - check to see if this user is authorized by AdminTools
+		
+
+		// check with the AuthzGroups appropriate for this entity
+		if(checkAuthzGroups(user.getId(), function, entityRef)) {
+			
+			return true;
+			
+		}
+		
+//		 IU Oncourse CL - check to see if this user is authorized by AdminTools
 		if(isAdminToolsUser(user)) {
 			
-			M_log.info(this+"checkAdminToolsUser(): TRUE");
+			M_log.info(this+"checkAdminToolsUser() ["+user.getEid()+"]: TRUE");
 			
 			if(checkAuthzAdminTools(user, function, entityRef)) {
 				
-				M_log.info(this+"checkAuthzAdminTools(): TRUE");
+				M_log.info(this+"checkAuthzAdminTools() ["+user.getEid()+"]: TRUE");
 				return true;
 			}
 			
 		}
+		return false;
 		// END IU
-
-		// check with the AuthzGroups appropriate for this entity
-		return checkAuthzGroups(user.getId(), function, entityRef);
 	}
 
 	/**
