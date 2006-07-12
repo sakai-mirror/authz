@@ -1,6 +1,6 @@
 /**********************************************************************************
  * $URL: https://source.sakaiproject.org/svn/authz/trunk/authz-impl/impl/src/java/org/sakaiproject/authz/impl/SakaiSecurity.java $
- * $Id: SakaiSecurity.java 9197 2006-05-09 19:53:26Z ggolden@umich.edu $
+ * $Id: SakaiSecurity.java 11408 2006-06-30 00:10:11 +0000 (Fri, 30 Jun 2006) ggolden@umich.edu $
  ***********************************************************************************
  *
  * Copyright (c) 2003, 2004, 2005, 2006 The Sakai Foundation.
@@ -153,21 +153,22 @@ public abstract class SakaiSecurity implements SecurityService
 	 */
 	public boolean isSuperUser()
 	{
-		return isSuperUser(userDirectoryService().getCurrentUser());
+		User user = userDirectoryService().getCurrentUser();
+		if (user == null) return false;
+
+		return isSuperUser(user.getId());
 	}
 
 	/**
-	 * Is this a super special super (admin or postmaster) user?
-	 * 
-	 * @return true, if the user is a cut above the rest, false if a mere mortal.
+	 * {@inheritDoc}
 	 */
-	protected boolean isSuperUser(User user)
+	public boolean isSuperUser(String userId)
 	{
 		// if no user or the no-id user (i.e. the anon user)
-		if ((user == null) || (user.getId().length() == 0)) return false;
+		if ((userId == null) || (userId.length() == 0)) return false;
 
 		// check the cache
-		String command = "super@" + user.getId();
+		String command = "super@" + userId;
 		if ((m_callCache != null) && (m_callCache.containsKey(command)))
 		{
 			boolean rv = ((Boolean) m_callCache.get(command)).booleanValue();
@@ -177,12 +178,12 @@ public abstract class SakaiSecurity implements SecurityService
 		boolean rv = false;
 
 		// these known ids are super
-		if (UserDirectoryService.ADMIN_ID.equalsIgnoreCase(user.getId()))
+		if (UserDirectoryService.ADMIN_ID.equalsIgnoreCase(userId))
 		{
 			rv = true;
 		}
 
-		else if ("postmaster".equalsIgnoreCase(user.getId()))
+		else if ("postmaster".equalsIgnoreCase(userId))
 		{
 			rv = true;
 		}
@@ -190,8 +191,8 @@ public abstract class SakaiSecurity implements SecurityService
 		// if the user has site modification rights in the "!admin" site, welcome aboard!
 		else
 		{
-			// TODO: stolen from site -ggolden
-			if (authzGroupService().isAllowed(user.getId(), "site.upd", "/site/!admin"))
+			// TODO: string constants stolen from site -ggolden
+			if (authzGroupService().isAllowed(userId, "site.upd", "/site/!admin"))
 			{
 				rv = true;
 			}
@@ -236,7 +237,7 @@ public abstract class SakaiSecurity implements SecurityService
 		}
 
 		// if super, grant
-		if (isSuperUser(user))
+		if (isSuperUser(user.getId()))
 		{
 			return true;
 		}
@@ -251,8 +252,6 @@ public abstract class SakaiSecurity implements SecurityService
 				return advice == SecurityAdvisor.SecurityAdvice.ALLOWED;
 			}
 		}
-		
-		
 
 		// check with the AuthzGroups appropriate for this entity
 		if(checkAuthzGroups(user.getId(), function, entityRef)) {
@@ -302,7 +301,7 @@ public abstract class SakaiSecurity implements SecurityService
 		Reference ref = entityManager().newReference(entityRef);
 
 		// get this entity's AuthzGroups
-		Collection azgs = ref.getRealms();
+		Collection azgs = ref.getAuthzGroups(userId);
 		boolean rv = authzGroupService().isAllowed(userId, function, azgs);
 
 		// cache
@@ -332,7 +331,7 @@ public abstract class SakaiSecurity implements SecurityService
 		Reference ref = entityManager().newReference(reference);
 
 		// get this resource's Realms
-		Collection realms = ref.getRealms();
+		Collection realms = ref.getAuthzGroups();
 
 		// get the users who can unlock in these realms
 		List ids = new Vector();
