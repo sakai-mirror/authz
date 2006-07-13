@@ -27,32 +27,19 @@ import java.util.List;
 import java.util.Stack;
 import java.util.Vector;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.AuthzGroupService;
 import org.sakaiproject.authz.api.SecurityAdvisor;
 import org.sakaiproject.authz.api.SecurityService;
-import org.sakaiproject.component.cover.ServerConfigurationService;
+import org.sakaiproject.authz.impl.OncourseSecurityAdvisor;
 import org.sakaiproject.entity.api.EntityManager;
 import org.sakaiproject.entity.api.Reference;
-import org.sakaiproject.entity.api.ResourceProperties;
-import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.memory.api.MemoryService;
 import org.sakaiproject.memory.api.MultiRefCache;
 import org.sakaiproject.thread_local.api.ThreadLocalManager;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
-
-import org.sakaiproject.site.api.Site;
-import org.sakaiproject.site.cover.SiteService;
-
-
 
 /**
  * <p>
@@ -134,6 +121,9 @@ public abstract class SakaiSecurity implements SecurityService
 		}
 
 		M_log.info("init() - caching minutes: " + m_cacheMinutes);
+		
+		M_log.info("init() - registering OncourseSecurityAdvisor (TODO- move init to a separate project)");
+		pushAdvisor(new OncourseSecurityAdvisor());
 	}
 
 	/**
@@ -254,26 +244,7 @@ public abstract class SakaiSecurity implements SecurityService
 		}
 
 		// check with the AuthzGroups appropriate for this entity
-		if(checkAuthzGroups(user.getId(), function, entityRef)) {
-			
-			return true;
-			
-		}
-		
-//		 IU Oncourse CL - check to see if this user is authorized by AdminTools
-		if(isAdminToolsUser(user)) {
-			
-			M_log.info(this+"checkAdminToolsUser() ["+user.getEid()+"]: TRUE");
-			
-			if(checkAuthzAdminTools(user, function, entityRef)) {
-				
-				M_log.info(this+"checkAuthzAdminTools() ["+user.getEid()+"]: TRUE");
-				return true;
-			}
-			
-		}
-		return false;
-		// END IU
+		return checkAuthzGroups(user.getId(), function, entityRef);
 	}
 
 	/**
@@ -455,188 +426,4 @@ public abstract class SakaiSecurity implements SecurityService
 	{
 		dropAdvisorStack();
 	}
-	
-	
-	protected boolean isAdminToolsUser(User user) {
-		
-		//if(checkAuthzGroups(user.getId(), "site.visit", "/site/admintools")) {
-		//	M_log.info(this+"checkAdminToolsUser(): TRUE");
-		//	return true;
-		//}
-		
-		//M_log.info(this+"checkAdminToolsUser(): FALSE");		
-		//return false;
-		
-		return true;
-	}
-	
-	protected boolean checkAuthzAdminTools(User u, String function, String entityRef) {
-		
-		String userId = u.getId();
-		
-		M_log.info(this+" checkAuthzAdminTools: userId: "+userId+ " function: "+function+" entityRef: "+entityRef);
-		
-		if(!entityRef.substring(0,6).equals("/site/")) {
-			
-		Reference ref = null;
-	
-			String refParts[] = entityRef.split("/");
-			
-			if(refParts.length > 3) {
-				
-				if(entityRef.substring(0,7).equals("/realm/")) {
-					
-					return unlock(u, "site.upd", "/site/"+refParts[4]);
-					
-				} else {
-				
-					return unlock(u, "site.upd", "/site/"+refParts[3]);
-				
-				}
-			}
-			
-			return false;
-			
-		}
-		
-		String siteId = entityRef.replaceFirst("/site/","");
-	
-		Site site = null;
-		
-	    try {
-			site = SiteService.getSite(siteId);
-		} catch (IdUnusedException e) {
-			M_log.error(this+": IdUnusedException: "+e);
-			return false;
-		}	
-	
-		ResourceProperties properties = site.getProperties();
-		
-		String classicId = properties.getProperty("site-oncourse-course-id");
-		String adminAuthorization = properties.getProperty("oncourse-admin-authorization");
-		
-		if(classicId == null && adminAuthorization == null) {
-			
-			return false;
-			
-		}
-		
-		String adminCampusList = null;
-		String adminDeptList = null;
-		
-		String sql = "SELECT CAMPUS,DEPT FROM ADMIN_RIGHTS WHERE USER_ID = '"+userId+"'";
-
-		Connection conn;
-		try {
-			conn = getOncourseConnection();
-			
-			Statement statement = conn.createStatement();
-			
-			ResultSet result = statement.executeQuery(sql);
-			
-			if(result.next()) {
-				
-				adminCampusList = result.getString("CAMPUS");
-				adminDeptList = result.getString("DEPT");
-				
-				
-			} else {
-				
-				return false;
-				
-			}
-			
-		
-	    result.close();
-		statement.close();
-		conn.close();
-			
-		} catch (SQLException e) {
-			M_log.error("SQLException: "+e);
-			return false;
-		}
-		
-		M_log.info(this+" checkAuthzAdminTools: classicId: "+classicId);
-		M_log.info(this+" checkAuthzAdminTools: adminCampusList: "+adminCampusList);
-		M_log.info(this+" checkAuthzAdminTools: adminDeptList: "+adminDeptList);
-		
-		String courseCampus = null;
-		String courseDept = null;
-		
-		if(classicId != null) {
-		
-			String classicIdList[] = classicId.split("-");
-	
-		
-			courseCampus = classicIdList[2];
-			courseDept = classicIdList[3];
-		} else {
-			
-			String adminAuthList[] = adminAuthorization.split("-");
-			
-			courseCampus = adminAuthList[0];
-			courseDept = adminAuthList[1];
-			
-		}
-		
-		
-		String adminCampus[] = adminCampusList.split(",");
-		String adminDept[]   = adminDeptList.split(",");
-		
-		
-		
-		for(int i=0; i < adminCampus.length; i++) {
-			
-			for(int j=0; j < adminDept.length; j++) {
-				
-				
-				M_log.info(this+" checkAuthzAdminTools: try to match: "+adminCampus[i]+"-"+adminDept[j]);
-
-				if(adminCampus[i].equals(courseCampus) || "%".equals(adminCampus[i])) {
-					
-					if(adminDept[j].equals(courseDept) || "%".equals(adminDept[j])) {
-			
-					
-						M_log.info(this+" checkAuthzAdminTools: MATCH");
-					    return true;
-					}
-					
-				}
-				
-			}
-			
-			
-		}
-		
-		
-		
-		return false;
-		
-	}
-
-	private Connection getOncourseConnection() throws SQLException {
-		
-	    
-		
-		String driver = ServerConfigurationService.getString("oncourse.driver");
-		String connect = ServerConfigurationService.getString("oncourse.connect.ocsystem");
-		String user = ServerConfigurationService.getString("oncourse.user");
-		String password = ServerConfigurationService.getString("oncourse.pw");
-
-		try {
-			Class.forName(driver).newInstance();
-		} catch (Exception e1) {
-			M_log.error(this+": error registering MSSQL JDBC driver: "+e1);
-		}
-
-		
-
-
-		return DriverManager.getConnection(connect, user, password);
-		
-		
-		
-	}
-
-	
 }
