@@ -51,8 +51,14 @@ public class OncourseSecurityAdvisor implements SecurityAdvisor {
 		
 		M_log.info("checkAuthzAdminTools: userId: "+userId+ " function: "+function+" entityRef: "+entityRef);
 		
-		M_log.info("checkAuthzAdminTools: userId: "+userId+ " function: "+function+" entityRef: "+entityRef);
-		
+		M_log.info(
+				  "id = "+ref.getId()		
+				+ "type = "+ref.getType()
+				+ "subtype = "+ref.getSubType()
+				+ "container = "+ref.getContainer()
+				+ "context = "+ref.getContext()
+				);
+				
 		
 		
 		return rv;
