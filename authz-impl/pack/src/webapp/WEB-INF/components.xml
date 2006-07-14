@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springkernel.org/dtd/spring-beans.dtd">
+
+<beans>
+
+	<bean id="org.sakaiproject.authz.api.AuthzGroupService"
+			class="org.sakaiproject.authz.impl.DbAuthzGroupService"
+			init-method="init"
+			destroy-method="destroy"
+			singleton="true">
+
+		<lookup-method name="sqlService" bean="org.sakaiproject.db.api.SqlService" />
+		<lookup-method name="userDirectoryService" bean="org.sakaiproject.user.api.UserDirectoryService" />
+		<lookup-method name="serverConfigurationService" bean="org.sakaiproject.component.api.ServerConfigurationService" />
+		<lookup-method name="entityManager" bean="org.sakaiproject.entity.api.EntityManager" />
+		<lookup-method name="functionManager" bean="org.sakaiproject.authz.api.FunctionManager" />
+		<lookup-method name="securityService" bean="org.sakaiproject.authz.api.SecurityService" />
+		<lookup-method name="timeService" bean="org.sakaiproject.time.api.TimeService" />
+ 		<lookup-method name="eventTrackingService" bean="org.sakaiproject.event.api.EventTrackingService" />
+ 		<lookup-method name="sessionManager" bean="org.sakaiproject.tool.api.SessionManager" />
+ 
+ 		<property name="autoDdl"><value>${auto.ddl}</value></property>
+	</bean>
+
+	<bean id="org.sakaiproject.authz.api.SecurityService"
+			class="org.sakaiproject.authz.impl.OncourseSecurity"
+			init-method="init"
+			destroy-method="destroy"
+			singleton="true">
+
+		<lookup-method name="threadLocalManager" bean="org.sakaiproject.thread_local.api.ThreadLocalManager" />
+		<lookup-method name="authzGroupService" bean="org.sakaiproject.authz.api.AuthzGroupService" />
+		<lookup-method name="userDirectoryService" bean="org.sakaiproject.user.api.UserDirectoryService" />
+ 		<lookup-method name="memoryService" bean="org.sakaiproject.memory.api.MemoryService" />
+ 		<lookup-method name="entityManager" bean="org.sakaiproject.entity.api.EntityManager" />
+
+  		<property name="cacheMinutes"><value>5</value></property>
+	</bean>
+
+	<bean id="org.sakaiproject.authz.api.FunctionManager"
+			class="org.sakaiproject.authz.impl.FunctionManagerComponent"
+			init-method="init"
+			destroy-method="destroy"
+			singleton="true">
+	</bean>
+
+</beans>
