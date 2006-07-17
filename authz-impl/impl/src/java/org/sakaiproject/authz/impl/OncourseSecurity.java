@@ -72,10 +72,10 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 		
 		M_log.info(
 		  "id = "+ref.getId()		
-		+ "type = "+ref.getType()
-		+ "subtype = "+ref.getSubType()
-		+ "container = "+ref.getContainer()
-		+ "context = "+ref.getContext()
+		+ " type = "+ref.getType()
+		+ " subtype = "+ref.getSubType()
+		+ " container = "+ref.getContainer()
+		+ " context = "+ref.getContext()
 		);
 		
 		
