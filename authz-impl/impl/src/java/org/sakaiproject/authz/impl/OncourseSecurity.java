@@ -81,8 +81,12 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 			
 		}
 		
-		return super.unlock(user, function, entityRef);
-	
+		boolean result =  super.unlock(user, function, entityRef);
+	   
+		M_log.info("super.unlock: "+result);
+		
+		return result;
+		
 	}
 	
 	/*
@@ -163,10 +167,10 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 			
 			M_log.info(
 			  "id = "+ref.getId()		
-			+ "type = "+ref.getType()
-			+ "subtype = "+ref.getSubType()
-			+ "container = "+ref.getContainer()
-			+ "context = "+ref.getContext()
+			+ " type = "+ref.getType()
+			+ " subtype = "+ref.getSubType()
+			+ " container = "+ref.getContainer()
+			+ " context = "+ref.getContext()
 			);
 			
 			String refParts[] = entityRef.split("/");
