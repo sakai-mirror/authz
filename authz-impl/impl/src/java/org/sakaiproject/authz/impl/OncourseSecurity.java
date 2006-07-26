@@ -94,11 +94,11 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 		// Oncourse CL - check to see if this user is authorized by AdminTools
 		if(isAdminToolsUser(user)) {
 			
-			M_log.info(this+"checkAdminToolsUser() ["+user.getEid()+"]: TRUE");
+			M_log.debug(this+"checkAdminToolsUser() ["+user.getEid()+"]: TRUE");
 			
 			if(checkAuthzAdminTools(user, function, entityRef)) {
 				
-				M_log.info(this+"checkAuthzAdminTools() ["+user.getEid()+"]: TRUE");
+				M_log.debug(this+"checkAuthzAdminTools() ["+user.getEid()+"]: TRUE");
 				return true;
 			}
 			
@@ -106,7 +106,7 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 		
 		boolean result =  super.unlock(user, function, entityRef);
 	   
-		M_log.info("super.unlock: "+result);
+		M_log.debug("super.unlock: "+result);
 		
 		return result;
 		
@@ -199,7 +199,7 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 				Boolean isAdminToolsUser = new Boolean(true);
 				
 				m_AdminToolsUserCache.put(user.getId(), isAdminToolsUser);
-				M_log.info(this+": cache miss: "+user.getId()+"="+isAdminToolsUser.booleanValue());
+				M_log.debug(this+": cache miss: "+user.getId()+"="+isAdminToolsUser.booleanValue());
 				return true;
 				
 			} else {
@@ -207,7 +207,7 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 				Boolean isAdminToolsUser = new Boolean(false);
 				
 				m_AdminToolsUserCache.put(user.getId(), isAdminToolsUser);
-				M_log.info(this+": cache miss: "+user.getId()+"="+isAdminToolsUser.booleanValue());
+				M_log.debug(this+": cache miss: "+user.getId()+"="+isAdminToolsUser.booleanValue());
 				return false;
 				
 			}
@@ -235,14 +235,14 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 		
 		String userId = u.getId();
 		
-		M_log.info(this+" checkAuthzAdminTools: userId: "+userId+ " function: "+function+" entityRef: "+entityRef);
+		M_log.debug(this+" checkAuthzAdminTools: userId: "+userId+ " function: "+function+" entityRef: "+entityRef);
 		
 		if(!entityRef.substring(0,6).equals("/site/")) {
 		
 			//TODO: Clean up this implementation - use Reference instead of custom parse	
 			//Reference ref = entityManager().newReference(entityRef);
 			
-			M_log.info("checkAuthzAdminTools: userEid: "+u.getEid()+ " function: "+function+" entityRef: "+entityRef);
+			M_log.debug("checkAuthzAdminTools: userEid: "+u.getEid()+ " function: "+function+" entityRef: "+entityRef);
 			
 			/*
 			M_log.info(
