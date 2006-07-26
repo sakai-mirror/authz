@@ -2,6 +2,7 @@ package org.sakaiproject.authz.impl;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -10,10 +11,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.AuthzGroupService;
 import org.sakaiproject.component.cover.ServerConfigurationService;
+import org.sakaiproject.db.cover.SqlService;
 import org.sakaiproject.entity.api.EntityManager;
 import org.sakaiproject.entity.api.Reference;
 import org.sakaiproject.entity.api.ResourceProperties;
 import org.sakaiproject.exception.IdUnusedException;
+import org.sakaiproject.memory.api.Cache;
 import org.sakaiproject.memory.api.MemoryService;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.cover.SiteService;
@@ -24,6 +27,10 @@ import org.sakaiproject.user.api.UserNotDefinedException;
 
 public abstract class OncourseSecurity extends SakaiSecurity {
 
+	protected static Cache m_AdminToolsUserCache = null;
+	
+	private int admin_tools_user_cache_duration = 60 * 5;
+	
 	/** Our logger. */
 	private static Log M_log = LogFactory.getLog(OncourseSecurity.class);
 	
@@ -51,9 +58,25 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 	 * @return the EntityManager collaborator.
 	 */
 	protected abstract EntityManager entityManager();
+	
+
+	public void init() {
+		
+		super.init();
+		
+		admin_tools_user_cache_duration = ServerConfigurationService.getInt("admin.tools.user.cache.duration", 60 * 5);
+
+		
+		// build a synchronized map for the oncoursedb cache
+		m_AdminToolsUserCache = memoryService().newHardCache();
+		
+		
+	}
 
 	public boolean unlock(User user, String function, String entityRef)
 	{
+		
+		
 		
 //		 pick up the current user if needed
 		if (user == null)
@@ -135,21 +158,77 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 	
 	protected boolean isAdminToolsUser(User user) {
 		
-		//TODO: SELECT * FROM SAKAI_SITE WHERE SITE_ID = '!admin'
-		// if user is in !admin group return true
-		// cache this result
+		
+		if (m_AdminToolsUserCache == null) {
+
+			M_log.warn(this+": m_AdminToolsUserCache not initialized!");
+			return false;
+		}
+
+		if (m_AdminToolsUserCache.containsKey(user.getId())) {
+			
+			  Boolean isAdminToolsUser = (Boolean) m_AdminToolsUserCache.getExpiredOrNot(user.getId());
+				
+				if (isAdminToolsUser != null) {
+					
+					M_log.info(this+": cache hit: "+user.getId()+"="+isAdminToolsUser.booleanValue());
+					return isAdminToolsUser.booleanValue();
+					
+				}
+			
+		}
+		
+		Connection conn = null;
+		PreparedStatement statement = null;
+		ResultSet result = null;
+			
+		try {
+			conn = SqlService.borrowConnection();
+			
+			String sql = "SELECT USER_ID FROM SAKAI_REALM SR, SAKAI_REALM_RL_GR SRRG WHERE SR.REALM_ID = '/site/admintools' "+
+            "and SR.REALM_KEY=SRRG.REALM_KEY and SRRG.USER_ID = ?";
+			
+			statement = conn.prepareStatement(sql);
+			
+			statement.setString(1, user.getId());
+			
+			result = statement.executeQuery();
+			
+			if(result != null && result.next()) {
+				
+				Boolean isAdminToolsUser = new Boolean(true);
+				
+				m_AdminToolsUserCache.put(user.getId(), isAdminToolsUser);
+				M_log.info(this+": cache miss: "+user.getId()+"="+isAdminToolsUser.booleanValue());
+				return true;
+				
+			} else {
+				
+				Boolean isAdminToolsUser = new Boolean(false);
+				
+				m_AdminToolsUserCache.put(user.getId(), isAdminToolsUser);
+				M_log.info(this+": cache miss: "+user.getId()+"="+isAdminToolsUser.booleanValue());
+				return false;
+				
+			}
+			
+			
+		} catch (SQLException e) {
+			M_log.error(this+": isAdminToolsUser: "+e);
+		} finally {
+			
+		   try{
+			if(result!= null) { result.close(); }
+			if(statement != null) { statement.close(); }
+			if(conn != null) { SqlService.returnConnection(conn); }
+		   } catch (SQLException e) {
+				M_log.error(this+": isAdminToolsUser: "+e);
+		   }
+		   
+		}
 		
 		
-		
-		//if(checkAuthzGroups(user.getId(), "site.visit", "/site/admintools")) {
-		//	M_log.info(this+"checkAdminToolsUser(): TRUE");
-		//	return true;
-		//}
-		
-		//M_log.info(this+"checkAdminToolsUser(): FALSE");		
-		//return false;
-		
-		return true;
+		return false;
 	}
 	
 	protected boolean checkAuthzAdminTools(User u, String function, String entityRef) {
@@ -161,10 +240,11 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 		if(!entityRef.substring(0,6).equals("/site/")) {
 		
 			//TODO: Clean up this implementation - use Reference instead of custom parse	
-			Reference ref = entityManager().newReference(entityRef);
+			//Reference ref = entityManager().newReference(entityRef);
 			
 			M_log.info("checkAuthzAdminTools: userEid: "+u.getEid()+ " function: "+function+" entityRef: "+entityRef);
 			
+			/*
 			M_log.info(
 			  "id = "+ref.getId()		
 			+ " type = "+ref.getType()
@@ -172,6 +252,7 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 			+ " container = "+ref.getContainer()
 			+ " context = "+ref.getContext()
 			);
+			*/
 			
 			String refParts[] = entityRef.split("/");
 			
