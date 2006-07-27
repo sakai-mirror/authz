@@ -171,7 +171,7 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 				
 				if (isAdminToolsUser != null) {
 					
-					M_log.info(this+": cache hit: "+user.getId()+"="+isAdminToolsUser.booleanValue());
+					M_log.debug(this+": cache hit: "+user.getId()+"="+isAdminToolsUser.booleanValue());
 					return isAdminToolsUser.booleanValue();
 					
 				}
