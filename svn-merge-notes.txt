@@ -1,0 +1,12 @@
+Skipped merges:
+
+
+Revision: 13497
+Author: bkirschn@umich.edu
+Date: 4:19:49 PM, Thursday, August 10, 2006
+Message:
+SAK-2677
+Update database creation with finer grained permissions for calendar and content
+Modified : /authz/trunk/authz-impl/impl/src/sql/hsqldb/sakai_realm.sql
+Modified : /authz/trunk/authz-impl/impl/src/sql/mysql/sakai_realm.sql
+Modified : /authz/trunk/authz-impl/impl/src/sql/oracle/sakai_realm.sql
