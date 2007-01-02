@@ -233,9 +233,9 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 	
 	protected boolean checkAuthzAdminTools(User u, String function, String entityRef) {
 		
-		String userId = u.getId();
+		String userEid = u.getEid();
 		
-		M_log.debug(this+" checkAuthzAdminTools: userId: "+userId+ " function: "+function+" entityRef: "+entityRef);
+		M_log.debug(this+" checkAuthzAdminTools: userEid: "+userEid+ " function: "+function+" entityRef: "+entityRef);
 		
 		if(!entityRef.substring(0,6).equals("/site/")) {
 		
@@ -298,7 +298,7 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 		String adminCampusList = null;
 		String adminDeptList = null;
 		
-		String sql = "SELECT CAMPUS,DEPT FROM ADMIN_RIGHTS WHERE USER_ID = '"+userId+"'";
+		String sql = "SELECT CAMPUS,DEPT FROM ADMIN_RIGHTS WHERE USER_ID = '"+userEid+"'";
 
 		Connection conn;
 		try {
