@@ -156,7 +156,8 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 	}
 */
 	
-	protected boolean isAdminToolsUser(User user) {
+	//protected boolean isAdminToolsUser(User user) {
+	public boolean isAdminToolsUser(User user) {
 		
 		
 		if (m_AdminToolsUserCache == null) {
