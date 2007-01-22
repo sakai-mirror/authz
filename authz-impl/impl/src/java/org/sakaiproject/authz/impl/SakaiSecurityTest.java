@@ -79,6 +79,6 @@ public class SakaiSecurityTest extends SakaiSecurity
 	 */
 	protected boolean isAdminToolsUser()
 	{
-		return null;
+		return false;
 	}
 }
