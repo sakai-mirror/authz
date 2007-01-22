@@ -77,7 +77,7 @@ public class SakaiSecurityTest extends SakaiSecurity
 	/**
 	 * @return is this user allowed to access Oncourse Dept Admin Tools?
 	 */
-   public boolean isAdminToolsUser(User)
+   public boolean isAdminToolsUser(User user)
 	{
 		return false;
 	}
