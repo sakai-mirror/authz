@@ -1,5 +1,5 @@
 /**********************************************************************************
- * $URL: https://source.sakaiproject.org/svn/authz/branches/sakai_2-2-x/authz-impl/impl/src/java/org/sakaiproject/authz/impl/SakaiSecurityTest.java $
+ * $URL: https://source.sakaiproject.org/svn/authz/tags/sakai_2-3-0/authz-impl/impl/src/java/org/sakaiproject/authz/impl/SakaiSecurityTest.java $
  * $Id: SakaiSecurityTest.java 7320 2006-04-01 20:03:17Z ggolden@umich.edu $
  ***********************************************************************************
  *
@@ -25,6 +25,7 @@ import org.sakaiproject.authz.api.AuthzGroupService;
 import org.sakaiproject.entity.api.EntityManager;
 import org.sakaiproject.memory.api.MemoryService;
 import org.sakaiproject.thread_local.api.ThreadLocalManager;
+import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
 
 /**
@@ -73,12 +74,10 @@ public class SakaiSecurityTest extends SakaiSecurity
 	{
 		return null;
 	}
-	
-	/**
-	 * @return is this user allowed to access Oncourse Dept Admin Tools?
-	 */
-   public boolean isAdminToolsUser(User user)
+
+	public boolean isAdminToolsUser(User user) 
 	{
+		// TODO Auto-generated method stub
 		return false;
 	}
 }
