@@ -1,6 +1,6 @@
 /**********************************************************************************
- * $URL: https://source.sakaiproject.org/svn/authz/tags/sakai_2-3-0/authz-api/api/src/java/org/sakaiproject/authz/api/SecurityService.java $
- * $Id: SecurityService.java 16955 2006-10-11 13:20:46Z lance@indiana.edu $
+ * $URL: https://source.sakaiproject.org/svn/authz/branches/sakai_2-4-x/authz-api/api/src/java/org/sakaiproject/authz/api/SecurityService.java $
+ * $Id: SecurityService.java 18600 2006-12-02 21:08:54Z ggolden@umich.edu $
  ***********************************************************************************
  *
  * Copyright (c) 2003, 2004, 2005, 2006 The Sakai Foundation.
@@ -21,6 +21,7 @@
 
 package org.sakaiproject.authz.api;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.sakaiproject.user.api.User;
@@ -71,6 +72,21 @@ public interface SecurityService
 	 * @return true, if the user can unlock the lock, false otherwise.
 	 */
 	boolean unlock(String userId, String lock, String reference);
+
+	/**
+	 * Can the specificed user id unlock the lock for use with this resource (using these authzGroups for the check)?
+	 * 
+	 * @param userId
+	 *        The user id.
+	 * @param lock
+	 *        The lock id string.
+	 * @param reference
+	 *        The resource reference string.
+	 * @param authzGroupIds
+	 *        The set of authz group ids to use for the check (the reference is not consulted).
+	 * @return true, if the user can unlock the lock, false otherwise.
+	 */
+	boolean unlock(String userId, String lock, String reference, Collection authzGroupIds);
 
 	/**
 	 * Access the List of Users who can unlock the lock for use with this resource.
