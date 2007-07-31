@@ -334,56 +334,57 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 		if (m_AdminToolsRightsCache.containsKey(u.getId())) {
 			
 			  adminRightsResult = (AdminRightsResult) m_AdminToolsRightsCache.getExpiredOrNot(u.getId());
+			  
+		}
 				
-				if (adminRightsResult != null) {
+		if (adminRightsResult != null) {
+			
+			M_log.info(this+": result cache hit: "+u.getId()+"="+adminRightsResult.adminCampusList+" "+adminRightsResult.adminDeptList);
+		
+			adminCampusList = adminRightsResult.adminCampusList;
+			adminDeptList = adminRightsResult.adminDeptList;
+				
+		} else {
+				
+			M_log.info(this+": result cache miss: "+u.getId());
+			
+			String sql = "SELECT CAMPUS,DEPT FROM ADMIN_RIGHTS WHERE USER_ID = '"+userEid+"'";
+
+			Connection conn;
+			try {
+				conn = getOncourseConnection();
+				
+				Statement statement = conn.createStatement();
+				
+				ResultSet result = statement.executeQuery(sql);
+				
+				if(result.next()) {
 					
-					M_log.info(this+": result cache hit: "+u.getId()+"="+adminRightsResult.adminCampusList+" "+adminRightsResult.adminDeptList);
-				
-					adminCampusList = adminRightsResult.adminCampusList;
-					adminDeptList = adminRightsResult.adminDeptList;
+					adminCampusList = result.getString("CAMPUS");
+					adminDeptList = result.getString("DEPT");
+					
 					
 				} else {
 					
-					M_log.info(this+": result cache miss: "+u.getId());
-					
-					String sql = "SELECT CAMPUS,DEPT FROM ADMIN_RIGHTS WHERE USER_ID = '"+userEid+"'";
-
-					Connection conn;
-					try {
-						conn = getOncourseConnection();
-						
-						Statement statement = conn.createStatement();
-						
-						ResultSet result = statement.executeQuery(sql);
-						
-						if(result.next()) {
-							
-							adminCampusList = result.getString("CAMPUS");
-							adminDeptList = result.getString("DEPT");
-							
-							
-						} else {
-							
-							return false;
-							
-						}
-						
-					
-				    result.close();
-					statement.close();
-					conn.close();
-						
-					} catch (SQLException e) {
-						M_log.error("SQLException: "+e);
-						return false;
-					}
-					
-					adminRightsResult = new AdminRightsResult(adminCampusList, adminDeptList);
-					m_AdminToolsRightsCache.put(u.getId(), adminRightsResult);
+					return false;
 					
 				}
+				
+			
+		    result.close();
+			statement.close();
+			conn.close();
+				
+			} catch (SQLException e) {
+				M_log.error("SQLException: "+e);
+				return false;
+			}
+			
+			adminRightsResult = new AdminRightsResult(adminCampusList, adminDeptList);
+			m_AdminToolsRightsCache.put(u.getId(), adminRightsResult);
 			
 		}
+	
 		
 		
 		
