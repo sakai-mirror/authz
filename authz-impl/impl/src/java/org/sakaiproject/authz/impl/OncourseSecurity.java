@@ -28,6 +28,7 @@ import org.sakaiproject.user.api.UserNotDefinedException;
 public abstract class OncourseSecurity extends SakaiSecurity {
 
 	protected static Cache m_AdminToolsUserCache = null;
+	protected static Cache m_AdminToolsRightsCache = null;
 	
 	private int admin_tools_user_cache_duration = 60 * 5;
 	
@@ -60,6 +61,22 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 	protected abstract EntityManager entityManager();
 	
 
+	class AdminRightsResult {
+		
+		AdminRightsResult(String deptList, String campusList) {
+			
+			this.adminDeptList = deptList;
+			this.adminCampusList = campusList;
+			
+			
+		}
+		
+		String adminDeptList;
+		String adminCampusList;
+		
+	}
+	
+	
 	public void init() {
 		
 		super.init();
@@ -69,6 +86,7 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 		
 		// build a synchronized map for the oncoursedb cache
 		m_AdminToolsUserCache = memoryService().newHardCache();
+		m_AdminToolsRightsCache = memoryService().newHardCache();
 		
 		
 	}
@@ -236,6 +254,18 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 		
 		String userEid = u.getEid();
 		
+		if (m_AdminToolsRightsCache == null) {
+
+			M_log.warn(this+": m_AdminToolsRightsCache not initialized!");
+			return false;
+		}
+
+		
+		
+		
+		
+		
+		
 		M_log.debug(this+" checkAuthzAdminTools: userEid: "+userEid+ " function: "+function+" entityRef: "+entityRef);
 		
 		if(!entityRef.substring(0,6).equals("/site/")) {
@@ -296,44 +326,71 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 			
 		}
 		
+		AdminRightsResult adminRightsResult = null;
+		
 		String adminCampusList = null;
 		String adminDeptList = null;
 		
-		String sql = "SELECT CAMPUS,DEPT FROM ADMIN_RIGHTS WHERE USER_ID = '"+userEid+"'";
+		if (m_AdminToolsRightsCache.containsKey(u.getId())) {
+			
+			  adminRightsResult = (AdminRightsResult) m_AdminToolsRightsCache.getExpiredOrNot(u.getId());
+				
+				if (adminRightsResult != null) {
+					
+					M_log.info(this+": result cache hit: "+u.getId()+"="+adminRightsResult.adminCampusList+" "+adminRightsResult.adminDeptList);
+				
+					adminCampusList = adminRightsResult.adminCampusList;
+					adminDeptList = adminRightsResult.adminDeptList;
+					
+				} else {
+					
+					M_log.info(this+": result cache miss: "+u.getId());
+					
+					String sql = "SELECT CAMPUS,DEPT FROM ADMIN_RIGHTS WHERE USER_ID = '"+userEid+"'";
 
-		Connection conn;
-		try {
-			conn = getOncourseConnection();
+					Connection conn;
+					try {
+						conn = getOncourseConnection();
+						
+						Statement statement = conn.createStatement();
+						
+						ResultSet result = statement.executeQuery(sql);
+						
+						if(result.next()) {
+							
+							adminCampusList = result.getString("CAMPUS");
+							adminDeptList = result.getString("DEPT");
+							
+							
+						} else {
+							
+							return false;
+							
+						}
+						
+					
+				    result.close();
+					statement.close();
+					conn.close();
+						
+					} catch (SQLException e) {
+						M_log.error("SQLException: "+e);
+						return false;
+					}
+					
+					adminRightsResult = new AdminRightsResult(adminCampusList, adminDeptList);
+					m_AdminToolsRightsCache.put(u.getId(), adminRightsResult);
+					
+				}
 			
-			Statement statement = conn.createStatement();
-			
-			ResultSet result = statement.executeQuery(sql);
-			
-			if(result.next()) {
-				
-				adminCampusList = result.getString("CAMPUS");
-				adminDeptList = result.getString("DEPT");
-				
-				
-			} else {
-				
-				return false;
-				
-			}
-			
-		
-	    result.close();
-		statement.close();
-		conn.close();
-			
-		} catch (SQLException e) {
-			M_log.error("SQLException: "+e);
-			return false;
 		}
 		
-		M_log.info(this+" checkAuthzAdminTools: classicId: "+classicId);
-		M_log.info(this+" checkAuthzAdminTools: adminCampusList: "+adminCampusList);
-		M_log.info(this+" checkAuthzAdminTools: adminDeptList: "+adminDeptList);
+		
+		
+		
+		M_log.debug(this+" checkAuthzAdminTools: classicId: "+classicId);
+		M_log.debug(this+" checkAuthzAdminTools: adminCampusList: "+adminCampusList);
+		M_log.debug(this+" checkAuthzAdminTools: adminDeptList: "+adminDeptList);
 		
 		String courseCampus = null;
 		String courseDept = null;
@@ -365,14 +422,14 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 			for(int j=0; j < adminDept.length; j++) {
 				
 				
-				M_log.info(this+" checkAuthzAdminTools: try to match: "+adminCampus[i]+"-"+adminDept[j]);
+				M_log.debug(this+" checkAuthzAdminTools: try to match: "+adminCampus[i]+"-"+adminDept[j]);
 
 				if(adminCampus[i].equals(courseCampus) || "%".equals(adminCampus[i])) {
 					
 					if(adminDept[j].equals(courseDept) || "%".equals(adminDept[j])) {
 			
 					
-						M_log.info(this+" checkAuthzAdminTools: MATCH");
+						M_log.debug(this+" checkAuthzAdminTools: MATCH");
 					    return true;
 					}
 					
