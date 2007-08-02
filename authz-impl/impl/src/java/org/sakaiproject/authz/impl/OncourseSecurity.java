@@ -380,7 +380,7 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 				return false;
 			}
 			
-			adminRightsResult = new AdminRightsResult(adminCampusList, adminDeptList);
+			adminRightsResult = new AdminRightsResult(adminDeptList, adminCampusList);
 			m_AdminToolsRightsCache.put(u.getId(), adminRightsResult);
 			
 		}
