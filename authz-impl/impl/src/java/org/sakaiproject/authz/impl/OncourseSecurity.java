@@ -389,9 +389,9 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 		
 		
 		
-		M_log.debug(this+" checkAuthzAdminTools: classicId: "+classicId);
-		M_log.debug(this+" checkAuthzAdminTools: adminCampusList: "+adminCampusList);
-		M_log.debug(this+" checkAuthzAdminTools: adminDeptList: "+adminDeptList);
+		M_log.info(this+" checkAuthzAdminTools: classicId: "+classicId);
+		M_log.info(this+" checkAuthzAdminTools: adminCampusList: "+adminCampusList);
+		M_log.info(this+" checkAuthzAdminTools: adminDeptList: "+adminDeptList);
 		
 		String courseCampus = null;
 		String courseDept = null;
@@ -423,14 +423,14 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 			for(int j=0; j < adminDept.length; j++) {
 				
 				
-				M_log.debug(this+" checkAuthzAdminTools: try to match: "+adminCampus[i]+"-"+adminDept[j]);
+				M_log.info(this+" checkAuthzAdminTools: try to match: "+adminCampus[i]+"-"+adminDept[j]);
 
 				if(adminCampus[i].equals(courseCampus) || "%".equals(adminCampus[i])) {
 					
 					if(adminDept[j].equals(courseDept) || "%".equals(adminDept[j])) {
 			
 					
-						M_log.debug(this+" checkAuthzAdminTools: MATCH");
+						M_log.info(this+" checkAuthzAdminTools: MATCH");
 					    return true;
 					}
 					
