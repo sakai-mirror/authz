@@ -23,7 +23,6 @@ package org.sakaiproject.authz.impl;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.Stack;
 
@@ -52,13 +51,13 @@ public class BaseRole implements Role
 	private static final long serialVersionUID = 1L;
 
 	/** The role id. */
-	protected String m_id = null;
+	protected String m_id;
 
 	/** The locks that make up this. */
-	protected Set m_locks = null;
+	protected Set<String> m_locks;
 
 	/** The role description. */
-	protected String m_description = null;
+	protected String m_description;
 	
 	/** Whether this is a provider-only role */
 	protected boolean m_providerOnly;
@@ -75,7 +74,7 @@ public class BaseRole implements Role
 	public BaseRole(String id)
 	{
 		m_id = id;
-		m_locks = new HashSet();
+		m_locks = new HashSet<String>();
 	}
 
 	/**
@@ -91,7 +90,7 @@ public class BaseRole implements Role
 		m_id = id;
 		m_description = ((BaseRole) other).m_description;
 		m_providerOnly = ((BaseRole) other).m_providerOnly;
-		m_locks = new HashSet();
+		m_locks = new HashSet<String>();
 		m_locks.addAll(((BaseRole) other).m_locks);
 	}
 
@@ -103,7 +102,7 @@ public class BaseRole implements Role
 	 */
 	public BaseRole(Element el, AuthzGroup azGroup)
 	{
-		m_locks = new HashSet();
+		m_locks = new HashSet<String>();
 		m_id = StringUtil.trimToNull(el.getAttribute("id"));
 
 		m_description = StringUtil.trimToNull(el.getAttribute("description"));
@@ -166,10 +165,8 @@ public class BaseRole implements Role
 		if (m_providerOnly) Xml.encodeAttribute(role, "provider-only", "true");
 
 		// locks
-		for (Iterator a = m_locks.iterator(); a.hasNext();)
+		for (String lock: m_locks) 
 		{
-			String lock = (String) a.next();
-
 			Element element = doc.createElement("ability");
 			role.appendChild(element);
 			element.setAttribute("lock", lock);
@@ -241,11 +238,9 @@ public class BaseRole implements Role
 	/**
 	 * {@inheritDoc}
 	 */
-	public Set getAllowedFunctions()
+	public Set<String> getAllowedFunctions()
 	{
-		Set rv = new HashSet();
-		rv.addAll(m_locks);
-		return rv;
+		return new HashSet<String>(m_locks);
 	}
 
 	/**
@@ -275,7 +270,7 @@ public class BaseRole implements Role
 	/**
 	 * {@inheritDoc}
 	 */
-	public void allowFunctions(Collection locks)
+	public void allowFunctions(Collection<String> locks)
 	{
 		m_locks.addAll(locks);
 	}
@@ -291,7 +286,7 @@ public class BaseRole implements Role
 	/**
 	 * {@inheritDoc}
 	 */
-	public void disallowFunctions(Collection locks)
+	public void disallowFunctions(Collection<String> locks)
 	{
 		m_locks.removeAll(locks);
 	}
@@ -315,15 +310,13 @@ public class BaseRole implements Role
 	/**
 	 * {@inheritDoc}
 	 */
-	public int compareTo(Object obj)
+	public int compareTo(Role obj)
 	{
-		if (!(obj instanceof Role)) throw new ClassCastException();
-
 		// if the object are the same, say so
 		if (obj == this) return 0;
 
 		// sort based on (unique) id
-		int compare = getId().compareTo(((Role) obj).getId());
+		int compare = getId().compareTo(obj.getId());
 
 		return compare;
 	}

@@ -21,11 +21,11 @@
 
 package org.sakaiproject.authz.impl;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
-import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -185,7 +185,7 @@ public abstract class SakaiSecurity implements SecurityService
 		// cache
 		if (m_callCache != null)
 		{
-			Collection azgIds = new Vector();
+			Collection<String> azgIds = new ArrayList<String>();
 			azgIds.add("/site/!admin");
 			m_callCache.put(command, Boolean.valueOf(rv), m_cacheMinutes * 60, null, azgIds);
 		}
@@ -226,7 +226,7 @@ public abstract class SakaiSecurity implements SecurityService
 	/**
 	 * {@inheritDoc}
 	 */
-	public boolean unlock(String userId, String function, String entityRef, Collection azgs)
+	public boolean unlock(String userId, String function, String entityRef, Collection<String> azgs)
 	{
 		// make sure we have complete parameters (azgs is optional)
 		if (userId == null || function == null || entityRef == null)
@@ -267,7 +267,7 @@ public abstract class SakaiSecurity implements SecurityService
 	 *        The entity reference string.
 	 * @return true if allowed, false if not.
 	 */
-	protected boolean checkAuthzGroups(String userId, String function, String entityRef, Collection azgs)
+	protected boolean checkAuthzGroups(String userId, String function, String entityRef, Collection<String> azgs)
 	{
 		// check the cache
 		String command = "unlock@" + userId + "@" + function + "@" + entityRef;
@@ -303,26 +303,26 @@ public abstract class SakaiSecurity implements SecurityService
 	 *        The resource reference string.
 	 * @return A List (User) of the users can unlock the lock (may be empty).
 	 */
-	public List unlockUsers(String lock, String reference)
+	public List<User> unlockUsers(String lock, String reference)
 	{
 		if (reference == null)
 		{
 			M_log.warn("unlockUsers(): null resource: " + lock);
-			return new Vector();
+			return new ArrayList<User>();
 		}
 
 		// make a reference for the resource
 		Reference ref = entityManager().newReference(reference);
 
 		// get this resource's Realms
-		Collection realms = ref.getAuthzGroups();
+		Collection<String> realms = ref.getAuthzGroups();
 
 		// get the users who can unlock in these realms
-		List ids = new Vector();
+		List<String> ids = new ArrayList<String>();
 		ids.addAll(authzGroupService().getUsersIsAllowed(lock, realms));
 
 		// convert the set of Users into a sorted list of users
-		List users = userDirectoryService().getUsers(ids);
+		List<User> users = userDirectoryService().getUsers(ids);
 		Collections.sort(users);
 
 		return users;
@@ -338,12 +338,12 @@ public abstract class SakaiSecurity implements SecurityService
 	 * @param force
 	 *        if true, create if missing
 	 */
-	protected Stack getAdvisorStack(boolean force)
+	protected Stack<SecurityAdvisor> getAdvisorStack(boolean force)
 	{
-		Stack advisors = (Stack) threadLocalManager().get(ADVISOR_STACK);
+	    Stack<SecurityAdvisor> advisors = (Stack<SecurityAdvisor>) threadLocalManager().get(ADVISOR_STACK);
 		if ((advisors == null) && force)
 		{
-			advisors = new Stack();
+			advisors = new Stack<SecurityAdvisor> ();
 			threadLocalManager().set(ADVISOR_STACK, advisors);
 		}
 
@@ -371,13 +371,13 @@ public abstract class SakaiSecurity implements SecurityService
 	 */
 	protected SecurityAdvisor.SecurityAdvice adviseIsAllowed(String userId, String function, String reference)
 	{
-		Stack advisors = getAdvisorStack(false);
+		Stack<SecurityAdvisor> advisors = getAdvisorStack(false);
 		if ((advisors == null) || (advisors.isEmpty())) return SecurityAdvisor.SecurityAdvice.PASS;
 
 		// a Stack grows to the right - process from top to bottom
 		for (int i = advisors.size() - 1; i >= 0; i--)
 		{
-			SecurityAdvisor advisor = (SecurityAdvisor) advisors.elementAt(i);
+			SecurityAdvisor advisor = advisors.elementAt(i);
 
 			SecurityAdvisor.SecurityAdvice advice = advisor.isAllowed(userId, function, reference);
 			if (advice != SecurityAdvisor.SecurityAdvice.PASS)
@@ -394,7 +394,7 @@ public abstract class SakaiSecurity implements SecurityService
 	 */
 	public void pushAdvisor(SecurityAdvisor advisor)
 	{
-		Stack advisors = getAdvisorStack(true);
+		Stack<SecurityAdvisor> advisors = getAdvisorStack(true);
 		advisors.push(advisor);
 	}
 
@@ -403,14 +403,14 @@ public abstract class SakaiSecurity implements SecurityService
 	 */
 	public SecurityAdvisor popAdvisor()
 	{
-		Stack advisors = getAdvisorStack(false);
+		Stack<SecurityAdvisor> advisors = getAdvisorStack(false);
 		if (advisors == null) return null;
 
 		SecurityAdvisor rv = null;
 
 		if (advisors.size() > 0)
 		{
-			rv = (SecurityAdvisor) advisors.pop();
+			rv = advisors.pop();
 		}
 
 		if (advisors.isEmpty())
@@ -426,7 +426,7 @@ public abstract class SakaiSecurity implements SecurityService
 	 */
 	public boolean hasAdvisors()
 	{
-		Stack advisors = getAdvisorStack(false);
+	    Stack<SecurityAdvisor>  advisors = getAdvisorStack(false);
 		if (advisors == null) return false;
 
 		return !advisors.isEmpty();

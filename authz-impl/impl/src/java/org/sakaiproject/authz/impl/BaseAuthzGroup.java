@@ -73,10 +73,10 @@ public class BaseAuthzGroup implements AuthzGroup
 	protected ResourcePropertiesEdit m_properties = null;
 
 	/** Map of userId to Member */
-	protected Map m_userGrants = null;
+	protected Map<String, BaseMember> m_userGrants = null;
 
 	/** Map of Role id to a Role defined in this AuthzGroup. */
-	protected Map m_roles = null;
+	protected Map<String, BaseRole> m_roles = null;
 
 	/** The external azGroup id, or null if not defined. */
 	protected String m_providerRealmId = null;
@@ -108,26 +108,28 @@ public class BaseAuthzGroup implements AuthzGroup
 	/** True if created by the "new" call rather than "add" - it has not yet been stored. */
 	protected boolean m_isNew = false;
 
+	private BaseAuthzGroupService m_service;
 	/**
 	 * Construct.
 	 * 
 	 * @param id
 	 *        The azGroup id.
 	 */
-	public BaseAuthzGroup(String id)
+	public BaseAuthzGroup(String id, BaseAuthzGroupService service)
 	{
 		m_id = id;
+		m_service = service;
 
 		// setup for properties
 		ResourcePropertiesEdit props = new BaseResourcePropertiesEdit();
 		m_properties = props;
 
-		m_userGrants = new HashMap();
-		m_roles = new HashMap();
+		m_userGrants = new HashMap<String, BaseMember>();
+		m_roles = new HashMap<String, BaseRole>();
 
 		// if the id is not null (a new azGroup, rather than a reconstruction)
 		// add the automatic (live) properties
-		if (m_id != null) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).addLiveProperties(this);
+		if (m_id != null) m_service.addLiveProperties(this);
 	}
 
 	/**
@@ -136,8 +138,9 @@ public class BaseAuthzGroup implements AuthzGroup
 	 * @param azGroup
 	 *        The azGroup object to use for values.
 	 */
-	public BaseAuthzGroup(AuthzGroup azGroup)
+	public BaseAuthzGroup(AuthzGroup azGroup, BaseAuthzGroupService service)
 	{
+	    m_service = service;
 		setAll(azGroup);
 	}
 
@@ -162,14 +165,15 @@ public class BaseAuthzGroup implements AuthzGroup
 	 *        The time modified.
 	 */
 	public BaseAuthzGroup(Integer dbid, String id, String providerId, String maintainRole, String createdBy, Time createdOn,
-			String modifiedBy, Time modifiedOn)
+			String modifiedBy, Time modifiedOn, BaseAuthzGroupService service)
 	{
 		// setup for properties
 		ResourcePropertiesEdit props = new BaseResourcePropertiesEdit();
 		m_properties = props;
+		m_service = service;
 
-		m_userGrants = new HashMap();
-		m_roles = new HashMap();
+		m_userGrants = new HashMap<String, BaseMember>();
+		m_roles = new HashMap<String, BaseRole>();
 
 		m_key = dbid;
 		m_id = id;
@@ -193,10 +197,11 @@ public class BaseAuthzGroup implements AuthzGroup
 	 * @param el
 	 *        The XML DOM Element definining the azGroup.
 	 */
-	public BaseAuthzGroup(Element el)
+	public BaseAuthzGroup(Element el, BaseAuthzGroupService service)
 	{
-		m_userGrants = new HashMap();
-		m_roles = new HashMap();
+		m_userGrants = new HashMap<String, BaseMember>();
+		m_roles = new HashMap<String, BaseRole>();
+		m_service = service;
 
 		// setup for properties
 		m_properties = new BaseResourcePropertiesEdit();
@@ -252,11 +257,11 @@ public class BaseAuthzGroup implements AuthzGroup
 				String provided = StringUtil.trimToNull(element.getAttribute("provided"));
 
 				// record this user - role grant - just use the first one
-				BaseRole role = (BaseRole) m_roles.get(roleId);
+				BaseRole role = m_roles.get(roleId);
 				if (role != null)
 				{
 					// if already granted, update to point to the role with the most permissions
-					BaseMember grant = (BaseMember) m_userGrants.get(userId);
+					BaseMember grant = m_userGrants.get(userId);
 					if (grant != null)
 					{
 						if (role.m_locks.size() > ((BaseRole) grant.role).m_locks.size())
@@ -308,7 +313,7 @@ public class BaseAuthzGroup implements AuthzGroup
 
 					if (lock != null)
 					{
-						BaseRole role = (BaseRole) m_roles.get(AuthzGroupService.ANON_ROLE);
+						BaseRole role = m_roles.get(AuthzGroupService.ANON_ROLE);
 						if (role == null)
 						{
 							role = new BaseRole(AuthzGroupService.ANON_ROLE);
@@ -333,7 +338,7 @@ public class BaseAuthzGroup implements AuthzGroup
 
 					if (lock != null)
 					{
-						BaseRole role = (BaseRole) m_roles.get(AuthzGroupService.AUTH_ROLE);
+						BaseRole role = m_roles.get(AuthzGroupService.AUTH_ROLE);
 						if (role == null)
 						{
 							role = new BaseRole(AuthzGroupService.AUTH_ROLE);
@@ -345,11 +350,11 @@ public class BaseAuthzGroup implements AuthzGroup
 
 				else if (userId != null)
 				{
-					BaseRole role = (BaseRole) m_roles.get(roleId);
+					BaseRole role = m_roles.get(roleId);
 					if (role != null)
 					{
 						// if already granted, update to point to the role with the most permissions
-						BaseMember grant = (BaseMember) m_userGrants.get(userId);
+						BaseMember grant = m_userGrants.get(userId);
 						if (grant != null)
 						{
 							if (role.m_locks.size() > ((BaseRole) grant.role).m_locks.size())
@@ -450,7 +455,7 @@ public class BaseAuthzGroup implements AuthzGroup
 		{
 			m_roles.remove("pubview");
 
-			BaseRole role = (BaseRole) m_roles.get(AuthzGroupService.ANON_ROLE);
+			BaseRole role = m_roles.get(AuthzGroupService.ANON_ROLE);
 			if (role == null)
 			{
 				role = new BaseRole(AuthzGroupService.ANON_ROLE);
@@ -494,7 +499,7 @@ public class BaseAuthzGroup implements AuthzGroup
 		// the rest are references to some resource
 		try
 		{
-			Reference ref = ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).entityManager().newReference(getId());
+			Reference ref = m_service.entityManager().newReference(getId());
 			return ref.getDescription();
 		}
 		catch (Throwable ignore)
@@ -512,42 +517,36 @@ public class BaseAuthzGroup implements AuthzGroup
 	 */
 	protected void setAll(AuthzGroup azGroup)
 	{
-		if (((BaseAuthzGroup) azGroup).m_lazy)
-			((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(((BaseAuthzGroup) azGroup));
+	    BaseAuthzGroup bazGroup = (BaseAuthzGroup) azGroup;
+		if (bazGroup.m_lazy)
+			m_service.m_storage.completeGet(bazGroup);
 
-		m_key = ((BaseAuthzGroup) azGroup).m_key;
-		m_id = ((BaseAuthzGroup) azGroup).m_id;
-		m_providerRealmId = ((BaseAuthzGroup) azGroup).m_providerRealmId;
-		m_maintainRole = ((BaseAuthzGroup) azGroup).m_maintainRole;
+		m_key = bazGroup.m_key;
+		m_id = bazGroup.m_id;
+		m_providerRealmId = bazGroup.m_providerRealmId;
+		m_maintainRole = bazGroup.m_maintainRole;
 
-		m_createdUserId = ((BaseAuthzGroup) azGroup).m_createdUserId;
-		m_lastModifiedUserId = ((BaseAuthzGroup) azGroup).m_lastModifiedUserId;
-		if (((BaseAuthzGroup) azGroup).m_createdTime != null)
-			m_createdTime = (Time) ((BaseAuthzGroup) azGroup).m_createdTime.clone();
-		if (((BaseAuthzGroup) azGroup).m_lastModifiedTime != null)
-			m_lastModifiedTime = (Time) ((BaseAuthzGroup) azGroup).m_lastModifiedTime.clone();
+		m_createdUserId = bazGroup.m_createdUserId;
+		m_lastModifiedUserId = bazGroup.m_lastModifiedUserId;
+		if (bazGroup.m_createdTime != null)
+			m_createdTime = (Time) bazGroup.m_createdTime.clone();
+		if (bazGroup.m_lastModifiedTime != null)
+			m_lastModifiedTime = (Time) bazGroup.m_lastModifiedTime.clone();
 
 		// make a deep copy of the roles as new Role objects
-		m_roles = new HashMap();
-		for (Iterator it = ((BaseAuthzGroup) azGroup).m_roles.entrySet().iterator(); it.hasNext();)
+		m_roles = new HashMap<String, BaseRole>();
+		for (String id: bazGroup.m_roles.keySet())
 		{
-			Map.Entry entry = (Map.Entry) it.next();
-			BaseRole role = (BaseRole) entry.getValue();
-			String id = (String) entry.getKey();
-
-			m_roles.put(id, new BaseRole(id, role));
+			m_roles.put(id, new BaseRole(id, bazGroup.m_roles.get(id)));
 		}
 
 		// make a deep copy (w/ new Member objects pointing to my own roles) of the user - role grants
-		m_userGrants = new HashMap();
-		for (Iterator it = ((BaseAuthzGroup) azGroup).m_userGrants.entrySet().iterator(); it.hasNext();)
+		m_userGrants = new HashMap<String, BaseMember>();
+		for (String id: bazGroup.m_userGrants.keySet())
 		{
-			Map.Entry entry = (Map.Entry) it.next();
-			BaseMember grant = (BaseMember) entry.getValue();
-			String id = (String) entry.getKey();
-
+		    BaseMember grant = bazGroup.m_userGrants.get(id);
 			m_userGrants
-					.put(id, new BaseMember((Role) m_roles.get(grant.role.getId()), grant.active, grant.provided, grant.userId));
+					.put(id, new BaseMember(m_roles.get(grant.role.getId()), grant.active, grant.provided, grant.userId));
 		}
 
 		m_properties = new BaseResourcePropertiesEdit();
@@ -562,7 +561,7 @@ public class BaseAuthzGroup implements AuthzGroup
 	 */
 	public Element toXml(Document doc, Stack stack)
 	{
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
 		Element azGroup = doc.createElement("azGroup");
 
@@ -596,18 +595,15 @@ public class BaseAuthzGroup implements AuthzGroup
 		getProperties().toXml(doc, stack);
 
 		// roles (write before grants!)
-		for (Iterator i = m_roles.values().iterator(); i.hasNext();)
+		for (BaseRole role: m_roles.values())
 		{
-			BaseRole role = (BaseRole) i.next();
 			role.toXml(doc, stack);
 		}
 
 		// user - role grants
-		for (Iterator i = m_userGrants.entrySet().iterator(); i.hasNext();)
+		for (String user: m_userGrants.keySet())
 		{
-			Map.Entry entry = (Map.Entry) i.next();
-			BaseMember grant = (BaseMember) entry.getValue();
-			String user = (String) entry.getKey();
+			BaseMember grant = m_userGrants.get(user);
 
 			Element element = doc.createElement("grant");
 			azGroup.appendChild(element);
@@ -644,7 +640,7 @@ public class BaseAuthzGroup implements AuthzGroup
 	 */
 	public String getUrl()
 	{
-		return ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).getAccessPoint(false) + m_id;
+		return m_service.getAccessPoint(false) + m_id;
 	}
 
 	/**
@@ -652,7 +648,7 @@ public class BaseAuthzGroup implements AuthzGroup
 	 */
 	public String getReference()
 	{
-		return ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).authzGroupReference(m_id);
+		return (AuthzGroupService.getInstance()).authzGroupReference(m_id);
 	}
 
 	/**
@@ -676,7 +672,7 @@ public class BaseAuthzGroup implements AuthzGroup
 	 */
 	public ResourceProperties getProperties()
 	{
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
 		return m_properties;
 	}
@@ -732,10 +728,10 @@ public class BaseAuthzGroup implements AuthzGroup
 	 */
 	public boolean isAllowed(String user, String lock)
 	{
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
 		// consider a role granted
-		BaseMember grant = (BaseMember) m_userGrants.get(user);
+		BaseMember grant = m_userGrants.get(user);
 		if ((grant != null) && (grant.active))
 		{
 			if (grant.role.isAllowed(lock)) return true;
@@ -744,7 +740,7 @@ public class BaseAuthzGroup implements AuthzGroup
 		// consider auth role
 		if (!UserDirectoryService.getAnonymousUser().getId().equals(user))
 		{
-			Role auth = (Role) m_roles.get(AuthzGroupService.AUTH_ROLE);
+			Role auth = m_roles.get(AuthzGroupService.AUTH_ROLE);
 			if (auth != null)
 			{
 				if (auth.isAllowed(lock)) return true;
@@ -752,7 +748,7 @@ public class BaseAuthzGroup implements AuthzGroup
 		}
 
 		// consider anon role
-		Role anon = (Role) m_roles.get(AuthzGroupService.ANON_ROLE);
+		Role anon = m_roles.get(AuthzGroupService.ANON_ROLE);
 		if (anon != null)
 		{
 			if (anon.isAllowed(lock)) return true;
@@ -766,9 +762,9 @@ public class BaseAuthzGroup implements AuthzGroup
 	 */
 	public boolean hasRole(String user, String role)
 	{
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
-		BaseMember grant = (BaseMember) m_userGrants.get(user);
+		BaseMember grant = m_userGrants.get(user);
 		if ((grant != null) && (grant.active) && (grant.role.getId().equals(role))) return true;
 
 		return false;
@@ -777,16 +773,14 @@ public class BaseAuthzGroup implements AuthzGroup
 	/**
 	 * {@inheritDoc}
 	 */
-	public Set getUsers()
+	public Set<String> getUsers()
 	{
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
-		Set rv = new HashSet();
-		for (Iterator it = m_userGrants.entrySet().iterator(); it.hasNext();)
+		Set<String> rv = new HashSet<String>();
+		for (String user: m_userGrants.keySet()) 
 		{
-			Map.Entry entry = (Map.Entry) it.next();
-			String user = (String) entry.getKey();
-			Member grant = (Member) entry.getValue();
+			Member grant = m_userGrants.get(user);
 			if (grant.isActive())
 			{
 				rv.add(user);
@@ -799,17 +793,15 @@ public class BaseAuthzGroup implements AuthzGroup
 	/**
 	 * {@inheritDoc}
 	 */
-	public Set getMembers()
+	public Set<Member> getMembers()
 	{
 		// Note: this is the only way to see non-active grants
 
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
-		Set rv = new HashSet();
-		for (Iterator it = m_userGrants.entrySet().iterator(); it.hasNext();)
+		Set<Member> rv = new HashSet<Member>();
+		for (Member grant: m_userGrants.values())
 		{
-			Map.Entry entry = (Map.Entry) it.next();
-			Member grant = (Member) entry.getValue();
 			rv.add(grant);
 		}
 
@@ -819,16 +811,14 @@ public class BaseAuthzGroup implements AuthzGroup
 	/**
 	 * {@inheritDoc}
 	 */
-	public Set getUsersIsAllowed(String lock)
+	public Set<String> getUsersIsAllowed(String lock)
 	{
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
-		Set rv = new HashSet();
-		for (Iterator it = m_userGrants.entrySet().iterator(); it.hasNext();)
+		Set<String> rv = new HashSet<String>();
+		for (String user: m_userGrants.keySet()) 
 		{
-			Map.Entry entry = (Map.Entry) it.next();
-			String user = (String) entry.getKey();
-			BaseMember grant = (BaseMember) entry.getValue();
+			BaseMember grant = m_userGrants.get(user);
 			if (grant.active && grant.role.isAllowed(lock))
 			{
 				rv.add(user);
@@ -841,16 +831,14 @@ public class BaseAuthzGroup implements AuthzGroup
 	/**
 	 * {@inheritDoc}
 	 */
-	public Set getUsersHasRole(String role)
+	public Set<String> getUsersHasRole(String role)
 	{
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
-		Set rv = new HashSet();
-		for (Iterator it = m_userGrants.entrySet().iterator(); it.hasNext();)
-		{
-			Map.Entry entry = (Map.Entry) it.next();
-			String user = (String) entry.getKey();
-			BaseMember grant = (BaseMember) entry.getValue();
+		Set<String> rv = new HashSet<String>();
+	    for (String user: m_userGrants.keySet()) 
+	    {
+	        BaseMember grant = m_userGrants.get(user);
 			if (grant.active && grant.role.getId().equals(role))
 			{
 				rv.add(user);
@@ -865,9 +853,9 @@ public class BaseAuthzGroup implements AuthzGroup
 	 */
 	public Role getUserRole(String user)
 	{
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
-		BaseMember grant = (BaseMember) m_userGrants.get(user);
+		BaseMember grant = m_userGrants.get(user);
 		if ((grant != null) && (grant.active)) return grant.role;
 
 		return null;
@@ -878,30 +866,29 @@ public class BaseAuthzGroup implements AuthzGroup
 	 */
 	public Member getMember(String user)
 	{
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
-		BaseMember grant = (BaseMember) m_userGrants.get(user);
+		BaseMember grant = m_userGrants.get(user);
 		return grant;
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public Set getRoles()
+	public Set<Role> getRoles()
 	{
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
-		return new HashSet(m_roles.values());
+		return new HashSet<Role>(m_roles.values());
 	}
 
-	public Set getRolesIsAllowed(String function)
+	public Set<String> getRolesIsAllowed(String function)
 	{
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
-		Set rv = new HashSet();
-		for (Iterator i = m_roles.values().iterator(); i.hasNext();)
+		Set<String> rv = new HashSet<String>();
+		for (Role r: m_roles.values())
 		{
-			Role r = (Role) i.next();
 			if (r.isAllowed(function))
 			{
 				rv.add(r.getId());
@@ -916,9 +903,9 @@ public class BaseAuthzGroup implements AuthzGroup
 	 */
 	public Role getRole(String id)
 	{
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
-		return (Role) m_roles.get(id);
+		return m_roles.get(id);
 	}
 
 	/**
@@ -934,7 +921,7 @@ public class BaseAuthzGroup implements AuthzGroup
 	 */
 	public boolean isEmpty()
 	{
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
 		// no roles, no grants to users, nothing in anon or auth
 		if (m_roles.isEmpty() && m_userGrants.isEmpty())
@@ -978,15 +965,13 @@ public class BaseAuthzGroup implements AuthzGroup
 	/**
 	 * {@inheritDoc}
 	 */
-	public int compareTo(Object obj)
+	public int compareTo(AuthzGroup obj)
 	{
-		if (!(obj instanceof AuthzGroup)) throw new ClassCastException();
-
 		// if the object are the same, say so
 		if (obj == this) return 0;
 
 		// sort based on id
-		int compare = getId().compareTo(((AuthzGroup) obj).getId());
+		int compare = getId().compareTo(obj.getId());
 
 		return compare;
 	}
@@ -996,14 +981,14 @@ public class BaseAuthzGroup implements AuthzGroup
 	 */
 	public void addMember(String user, String roleId, boolean active, boolean provided)
 	{
-		Role role = (Role) m_roles.get(roleId);
+		Role role = m_roles.get(roleId);
 		if (role == null)
 		{
 			M_log.warn(".addUserRole: role undefined: " + roleId);
 			return;
 		}
 
-		BaseMember grant = (BaseMember) m_userGrants.get(user);
+		BaseMember grant = m_userGrants.get(user);
 		if (grant == null)
 		{
 			grant = new BaseMember(role, active, provided, user);
@@ -1022,7 +1007,7 @@ public class BaseAuthzGroup implements AuthzGroup
 	 */
 	public void removeMember(String user)
 	{
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
 		m_userGrants.remove(user);
 	}
@@ -1043,7 +1028,7 @@ public class BaseAuthzGroup implements AuthzGroup
 	 */
 	public void removeMembers()
 	{
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
 		m_userGrants.clear();
 	}
@@ -1053,9 +1038,9 @@ public class BaseAuthzGroup implements AuthzGroup
 	 */
 	public Role addRole(String id) throws RoleAlreadyDefinedException
 	{
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
-		Role role = (Role) m_roles.get(id);
+		BaseRole role = m_roles.get(id);
 		if (role != null) throw new RoleAlreadyDefinedException(id);
 
 		role = new BaseRole(id);
@@ -1069,9 +1054,9 @@ public class BaseAuthzGroup implements AuthzGroup
 	 */
 	public Role addRole(String id, Role other) throws RoleAlreadyDefinedException
 	{
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
-		Role role = (Role) m_roles.get(id);
+		BaseRole role = m_roles.get(id);
 		if (role != null) throw new RoleAlreadyDefinedException(id);
 
 		role = new BaseRole(id, other);
@@ -1085,19 +1070,18 @@ public class BaseAuthzGroup implements AuthzGroup
 	 */
 	public void removeRole(String roleId)
 	{
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
-		Role r = (Role) m_roles.get(roleId);
+		BaseRole r = m_roles.get(roleId);
 		if (r != null)
 		{
 			m_roles.remove(roleId);
 
 			// remove the role from any appearance in m_userGrants
-			for (Iterator it = m_userGrants.entrySet().iterator(); it.hasNext();)
+			for (Iterator<Map.Entry<String, BaseMember>> it = m_userGrants.entrySet().iterator(); it.hasNext();)
 			{
-				Map.Entry entry = (Map.Entry) it.next();
-				BaseMember grant = (BaseMember) entry.getValue();
-				String id = (String) entry.getKey();
+			    Map.Entry<String, BaseMember> entry = it.next();
+				BaseMember grant = entry.getValue();
 
 				if (grant.role.equals(r))
 				{
@@ -1112,7 +1096,7 @@ public class BaseAuthzGroup implements AuthzGroup
 	 */
 	public void removeRoles()
 	{
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
 		// clear roles and grants (since grants grant roles)
 		m_roles.clear();
@@ -1161,7 +1145,7 @@ public class BaseAuthzGroup implements AuthzGroup
 	 */
 	public ResourcePropertiesEdit getPropertiesEdit()
 	{
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
 		return m_properties;
 	}
@@ -1176,13 +1160,13 @@ public class BaseAuthzGroup implements AuthzGroup
 		boolean rv = false;
 
 		// get un-lazy
-		if (m_lazy) ((BaseAuthzGroupService) (AuthzGroupService.getInstance())).m_storage.completeGet(this);
+		if (m_lazy) m_service.m_storage.completeGet(this);
 
 		// for each member
-		for (Iterator it = m_userGrants.entrySet().iterator(); it.hasNext();)
-		{
-			Map.Entry entry = (Map.Entry) it.next();
-			Member grant = (Member) entry.getValue();
+		for (Iterator<Map.Entry<String, BaseMember>> it = m_userGrants.entrySet().iterator(); it.hasNext();)
+        {
+            Map.Entry<String, BaseMember> entry = it.next();
+			Member grant = entry.getValue();
 
 			Member otherMember = other.getMember(grant.getUserId());
 

@@ -127,15 +127,14 @@ public class BaseMember implements Member
 	/**
 	 * {@inheritDoc}
 	 */
-	public int compareTo(Object obj)
+	public int compareTo(Member obj)
 	{
-		if (!(obj instanceof Member)) throw new ClassCastException();
 
 		// if the object are the same, say so
 		if (obj == this) return 0;
 
 		// compare by comparing the user id
-		int compare = getUserId().compareTo(((Member) obj).getUserId());
+		int compare = getUserId().compareTo(obj.getUserId());
 
 		return compare;
 	}

@@ -21,8 +21,8 @@
 
 package org.sakaiproject.authz.impl;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -159,9 +159,9 @@ public abstract class NoSecurity implements SecurityService
 	 *        The resource reference string.
 	 * @return A List (User) of the users can unlock the lock (may be empty).
 	 */
-	public List unlockUsers(String lock, String reference)
+	public List<User> unlockUsers(String lock, String reference)
 	{
-		return new Vector();
+		return new ArrayList<User>();
 	}
 
 	protected String getUserId(User u)

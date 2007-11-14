@@ -21,14 +21,13 @@
 
 package org.sakaiproject.authz.impl;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
-import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -38,7 +37,6 @@ import org.sakaiproject.authz.api.AuthzPermissionException;
 import org.sakaiproject.authz.api.FunctionManager;
 import org.sakaiproject.authz.api.GroupAlreadyDefinedException;
 import org.sakaiproject.authz.api.GroupFullException;
-import org.sakaiproject.authz.api.GroupIdInvalidException;
 import org.sakaiproject.authz.api.GroupNotDefinedException;
 import org.sakaiproject.authz.api.GroupProvider;
 import org.sakaiproject.authz.api.Role;
@@ -303,7 +301,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	/**
 	 * {@inheritDoc}
 	 */
-	public List getAuthzGroups(String criteria, PagingPosition page)
+	public List<AuthzGroup> getAuthzGroups(String criteria, PagingPosition page)
 	{
 		return m_storage.getAuthzGroups(criteria, page);
 	}
@@ -319,7 +317,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	/**
 	 * {@inheritDoc} 
 	 */
-	public Set getAuthzGroupIds(String providerId)
+	public Set<String> getAuthzGroupIds(String providerId)
 	{
 		return m_storage.getAuthzGroupIds(providerId);
 	}
@@ -327,7 +325,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	/**
 	 * {@inheritDoc} 
 	 */
-	public Set getProviderIds(String authzGroupId)
+	public Set<String> getProviderIds(String authzGroupId)
 	{
 		return m_storage.getProviderIds(authzGroupId);
 	}
@@ -429,7 +427,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 		// if the user currently is the only maintain role user, disallow the unjoin
 		if (grant.getRole().getId().equals(azGroup.getMaintainRole()))
 		{
-			Set maintainers = azGroup.getUsersHasRole(azGroup.getMaintainRole());
+			Set<String> maintainers = azGroup.getUsersHasRole(azGroup.getMaintainRole());
 			if (maintainers.size() <= 1)
 			{
 				throw new AuthzPermissionException(user, SECURE_UPDATE_OWN_AUTHZ_GROUP, authzGroupId);
@@ -514,7 +512,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 		// if the user currently is the only maintain role user, disallow the unjoin
 		if (grant.getRole().getId().equals(azGroup.getMaintainRole()))
 		{
-			Set maintainers = azGroup.getUsersHasRole(azGroup.getMaintainRole());
+			Set<String> maintainers = azGroup.getUsersHasRole(azGroup.getMaintainRole());
 			if (maintainers.size() <= 1)
 			{
 				return false;
@@ -670,7 +668,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	/**
 	 * {@inheritDoc}
 	 */
-	public AuthzGroup addAuthzGroup(String id) throws GroupIdInvalidException, GroupAlreadyDefinedException,
+	public AuthzGroup addAuthzGroup(String id) throws GroupAlreadyDefinedException,
 			AuthzPermissionException
 	{
 		// check security (throws if not permitted)
@@ -697,7 +695,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	/**
 	 * {@inheritDoc}
 	 */
-	public AuthzGroup addAuthzGroup(String id, AuthzGroup other, String userId) throws GroupIdInvalidException,
+	public AuthzGroup addAuthzGroup(String id, AuthzGroup other, String userId) throws 
 			GroupAlreadyDefinedException, AuthzPermissionException
 	{
 		// make the new AuthzGroup
@@ -726,10 +724,10 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	/**
 	 * {@inheritDoc}
 	 */
-	public AuthzGroup newAuthzGroup(String id, AuthzGroup other, String userId) throws GroupAlreadyDefinedException
+	public AuthzGroup newAuthzGroup(String id, AuthzGroup other, String userId) 
 	{
 		// make the new AuthzGroup
-		BaseAuthzGroup azGroup = new BaseAuthzGroup(id);
+		BaseAuthzGroup azGroup = new BaseAuthzGroup(id, this);
 		azGroup.m_isNew = true;
 
 		// move in the values from the old AuthzGroup (this includes the id, which we restore)
@@ -827,7 +825,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	/**
 	 * {@inheritDoc}
 	 */
-	public boolean isAllowed(String user, String function, Collection azGroups)
+	public boolean isAllowed(String user, String function, Collection<String> azGroups)
 	{
 		return m_storage.isAllowed(user, function, azGroups);
 	}
@@ -835,7 +833,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	/**
 	 * {@inheritDoc}
 	 */
-	public Set getUsersIsAllowed(String function, Collection azGroups)
+	public Set<String> getUsersIsAllowed(String function, Collection<String> azGroups)
 	{
 		return m_storage.getUsersIsAllowed(function, azGroups);
 	}
@@ -843,7 +841,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	/**
 	 * {@inheritDoc}
 	 */
-	public Set getAllowedFunctions(String role, Collection azGroups)
+	public Set<String> getAllowedFunctions(String role, Collection<String> azGroups)
 	{
 		return m_storage.getAllowedFunctions(role, azGroups);
 	}
@@ -851,7 +849,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	/**
 	 * {@inheritDoc}
 	 */
-	public Set getAuthzGroupsIsAllowed(String userId, String function, Collection azGroups)
+	public Set<String> getAuthzGroupsIsAllowed(String userId, String function, Collection<String> azGroups)
 	{
 		return m_storage.getAuthzGroupsIsAllowed(userId, function, azGroups);
 	}
@@ -867,7 +865,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	/**
 	 * {@inheritDoc}
 	 */
-	public Map getUsersRole(Collection userIds, String azGroupId)
+	public Map<String, String> getUsersRole(Collection<String> userIds, String azGroupId)
 	{
 		return m_storage.getUsersRole(userIds, azGroupId);
 	}
@@ -884,21 +882,20 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 			String eid = userDirectoryService().getUserEid(userId);
 
 			// wrap the provided map in our special map that will deal with compound provider ids
-			Map providerGrants = new ProviderMap(m_provider, m_provider.getGroupRolesForUser(eid));
+			Map<String, String> providerGrants = new ProviderMap(m_provider, m_provider.getGroupRolesForUser(eid));
 
 			m_storage.refreshUser(userId, providerGrants);
 
 			// update site security for this user - get the user's realms for the three site locks
-			Set updAuthzGroups = getAuthzGroupsIsAllowed(userId, SiteService.SECURE_UPDATE_SITE, null);
-			Set unpAuthzGroups = getAuthzGroupsIsAllowed(userId, SiteService.SITE_VISIT_UNPUBLISHED, null);
-			Set visitAuthzGroups = getAuthzGroupsIsAllowed(userId, SiteService.SITE_VISIT, null);
+			Set<String> updAuthzGroups = getAuthzGroupsIsAllowed(userId, SiteService.SECURE_UPDATE_SITE, null);
+			Set<String> unpAuthzGroups = getAuthzGroupsIsAllowed(userId, SiteService.SITE_VISIT_UNPUBLISHED, null);
+			Set<String> visitAuthzGroups = getAuthzGroupsIsAllowed(userId, SiteService.SITE_VISIT, null);
 
 			// convert from azGroup ids (potential site references) to site ids for those that are site,
 			// skipping special and user sites other than our user's
-			Set updSites = new HashSet();
-			for (Iterator i = updAuthzGroups.iterator(); i.hasNext();)
+			Set<String> updSites = new HashSet<String>();
+			for (String azGroupId: updAuthzGroups)
 			{
-				String azGroupId = (String) i.next();
 				Reference ref = entityManager().newReference(azGroupId);
 				if ((SiteService.APPLICATION_ID.equals(ref.getType())) && SiteService.SITE_SUBTYPE.equals(ref.getSubType())
 						&& !SiteService.isSpecialSite(ref.getId())
@@ -908,10 +905,9 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 				}
 			}
 
-			Set unpSites = new HashSet();
-			for (Iterator i = unpAuthzGroups.iterator(); i.hasNext();)
+			Set<String> unpSites = new HashSet<String>();
+			for (String azGroupId: unpAuthzGroups)
 			{
-				String azGroupId = (String) i.next();
 				Reference ref = entityManager().newReference(azGroupId);
 				if ((SiteService.APPLICATION_ID.equals(ref.getType())) && SiteService.SITE_SUBTYPE.equals(ref.getSubType())
 						&& !SiteService.isSpecialSite(ref.getId())
@@ -921,10 +917,9 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 				}
 			}
 
-			Set visitSites = new HashSet();
-			for (Iterator i = visitAuthzGroups.iterator(); i.hasNext();)
+			Set<String> visitSites = new HashSet<String>();
+			for (String azGroupId: visitAuthzGroups)
 			{
-				String azGroupId = (String) i.next();
 				Reference ref = entityManager().newReference(azGroupId);
 				if ((SiteService.APPLICATION_ID.equals(ref.getType())) && SiteService.SITE_SUBTYPE.equals(ref.getSubType())
 						&& !SiteService.isSpecialSite(ref.getId())
@@ -955,9 +950,9 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 		if (SiteService.APPLICATION_ID.equals(ref.getType()) && SiteService.SITE_SUBTYPE.equals(ref.getSubType()))
 		{
 			// collect the users
-			Set updUsers = azGroup.getUsersIsAllowed(SiteService.SECURE_UPDATE_SITE);
-			Set unpUsers = azGroup.getUsersIsAllowed(SiteService.SITE_VISIT_UNPUBLISHED);
-			Set visitUsers = azGroup.getUsersIsAllowed(SiteService.SITE_VISIT);
+			Set<String> updUsers = azGroup.getUsersIsAllowed(SiteService.SECURE_UPDATE_SITE);
+			Set<String> unpUsers = azGroup.getUsersIsAllowed(SiteService.SITE_VISIT_UNPUBLISHED);
+			Set<String> visitUsers = azGroup.getUsersIsAllowed(SiteService.SITE_VISIT);
 
 			SiteService.setSiteSecurity(ref.getId(), updUsers, unpUsers, visitUsers);
 		}
@@ -1056,12 +1051,12 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	/**
 	 * {@inheritDoc}
 	 */
-	public Collection getEntityAuthzGroups(Reference ref, String userId)
+	public Collection<String> getEntityAuthzGroups(Reference ref, String userId)
 	{
 		// double check that it's mine
 		if (APPLICATION_ID != ref.getType()) return null;
 
-		Collection rv = new Vector();
+		Collection<String> rv = new ArrayList<String>();
 
 		// if the reference is an AuthzGroup, and not a special one
 		// get the list of realms for the azGroup-referenced resource
@@ -1195,7 +1190,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 		 *        The PagePosition subset of items to return.
 		 * @return The List (AuthzGroup) of AuthzGroups that meet specified criteria.
 		 */
-		List getAuthzGroups(String criteria, PagingPosition page);
+		List<AuthzGroup> getAuthzGroups(String criteria, PagingPosition page);
 
 		/**
 		 * Count the AuthzGroup objets that meet specified criteria.
@@ -1212,7 +1207,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 		 * @param authzGroupId The ID of the AuthzGroup
 		 * @return The Set (String) of provider IDs
 		 */
-		public Set getProviderIds(String authzGroupId);
+		public Set<String> getProviderIds(String authzGroupId);
 
 		/**
 		 * Get the AuthzGroup IDs associated with a provider ID.
@@ -1220,7 +1215,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 		 * @param providerId The provider id
 		 * @return The Set (String) of AuthzGroup IDs
 		 */
-		public Set getAuthzGroupIds(String providerId);
+		public Set<String> getAuthzGroupIds(String providerId);
 
 		/**
 		 * Complete the read process once the basic AuthzGroup info has been read.
@@ -1254,7 +1249,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 		 *        A collection of AuthzGroup ids to consult.
 		 * @return true if this user is allowed to perform the function in the named AuthzGroups, false if not.
 		 */
-		boolean isAllowed(String userId, String function, Collection realms);
+		boolean isAllowed(String userId, String function, Collection<String> azGroups);
 
 		/**
 		 * Get the set of user ids of users who are allowed to perform the function in the named AuthzGroups.
@@ -1265,7 +1260,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 		 *        A collection of the ids of AuthzGroups to consult.
 		 * @return the Set (String) of user ids of users who are allowed to perform the function in the named AuthzGroups.
 		 */
-		Set getUsersIsAllowed(String function, Collection azGroups);
+		Set<String> getUsersIsAllowed(String function, Collection<String> azGroups);
 
 		/**
 		 * Get the set of functions that users with this role in these AuthzGroups are allowed to perform.
@@ -1276,7 +1271,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 		 *        A collection of AuthzGroup ids to consult.
 		 * @return the Set (String) of functions that users with this role in these AuthzGroups are allowed to perform
 		 */
-		Set getAllowedFunctions(String role, Collection azGroups);
+		Set<String> getAllowedFunctions(String role, Collection<String> azGroups);
 
 		/**
 		 * Get the set of AuthzGroup ids in which this user is allowed to perform this function.
@@ -1289,7 +1284,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 		 *        The Collection of AuthzGroup ids to search; if null, search them all.
 		 * @return the Set (String) of AuthzGroup ids in which this user is allowed to perform this function.
 		 */
-		Set getAuthzGroupsIsAllowed(String userId, String function, Collection azGroups);
+		Set<String> getAuthzGroupsIsAllowed(String userId, String function, Collection<String> azGroups);
 
 		/**
 		 * Get the role name for this user in this AuthzGroup.
@@ -1315,7 +1310,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 		 *        The AuthzGroup id to consult, if it exists.
 		 * @return A Map (userId -> role name) of role names for each user who have active membership; if the user does not, it will not be in the Map.
 		 */
-		Map getUsersRole(Collection userIds, String azGroupId);
+		Map<String, String> getUsersRole(Collection<String> userIds, String azGroupId);
 
 		/**
 		 * Refresh this user's roles in any AuthzGroup that has an entry in the map; the user's new role is in the map.
@@ -1325,7 +1320,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 		 * @param providerMembership
 		 *        The Map of external group id -> role id.
 		 */
-		void refreshUser(String userId, Map providerMembership);
+		void refreshUser(String userId, Map<String, String> providerMembership);
 
 		/**
 		 * Refresh the external user - role membership for this AuthzGroup
@@ -1341,7 +1336,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	 *********************************************************************************************************************************************************************************************************************************************************/
 
 	/**
-	 * Construct a new continer given just an id.
+	 * Construct a new container given just an id.
 	 * 
 	 * @param id
 	 *        The id for the new object.
@@ -1389,7 +1384,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	 */
 	public Entity newResource(Entity container, String id, Object[] others)
 	{
-		return new BaseAuthzGroup(id);
+		return new BaseAuthzGroup(id, this);
 	}
 
 	/**
@@ -1403,7 +1398,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	 */
 	public Entity newResource(Entity container, Element element)
 	{
-		return new BaseAuthzGroup(element);
+		return new BaseAuthzGroup(element, this);
 	}
 
 	/**
@@ -1417,7 +1412,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	 */
 	public Entity newResource(Entity container, Entity other)
 	{
-		return new BaseAuthzGroup((AuthzGroup) other);
+		return new BaseAuthzGroup((AuthzGroup) other, this);
 	}
 
 	/**
@@ -1469,7 +1464,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	 */
 	public Edit newResourceEdit(Entity container, String id, Object[] others)
 	{
-		BaseAuthzGroup e = new BaseAuthzGroup(id);
+		BaseAuthzGroup e = new BaseAuthzGroup(id, this);
 		e.activate();
 		return e;
 	}
@@ -1485,7 +1480,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	 */
 	public Edit newResourceEdit(Entity container, Element element)
 	{
-		BaseAuthzGroup e = new BaseAuthzGroup(element);
+		BaseAuthzGroup e = new BaseAuthzGroup(element, this);
 		e.activate();
 		return e;
 	}
@@ -1501,7 +1496,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 	 */
 	public Edit newResourceEdit(Entity container, Entity other)
 	{
-		BaseAuthzGroup e = new BaseAuthzGroup((AuthzGroup) other);
+		BaseAuthzGroup e = new BaseAuthzGroup((AuthzGroup) other, this);
 		e.activate();
 		return e;
 	}
@@ -1552,12 +1547,12 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 		return null;
 	}
 	
-	public class ProviderMap implements Map
+	public class ProviderMap implements Map<String, String>
 	{
-		protected Map m_wrapper = null;
+		protected Map<String, String> m_wrapper = null;
 		protected GroupProvider m_provider = null;
 
-		public ProviderMap(GroupProvider provider, Map wrapper)
+		public ProviderMap(GroupProvider provider, Map<String, String> wrapper)
 		{
 			m_provider = provider;
 			m_wrapper = wrapper;
@@ -1578,15 +1573,15 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 			return m_wrapper.containsValue(value);
 		}
 
-		public Set entrySet()
+		public Set<Map.Entry<String, String>> entrySet()
 		{
 			return m_wrapper.entrySet();
 		}
 
-		public Object get(Object key)
+		public String get(Object key)
 		{
 			// if we have this key exactly, use it
-			Object value = m_wrapper.get(key);
+			String value = m_wrapper.get(key);
 			if (value != null) return value;
 
 			// otherwise break up key as a compound id and find what values we have for these
@@ -1601,7 +1596,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 				// if we found one already, ask the provider which to keep
 				if (value != null)
 				{
-					rv = m_provider.preferredRole((String)value, rv);
+					rv = m_provider.preferredRole(value, rv);
 				}
 			}
 
@@ -1613,22 +1608,22 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 			return m_wrapper.isEmpty();
 		}
 
-		public Set keySet()
+		public Set<String> keySet()
 		{
 			return m_wrapper.keySet();
 		}
 
-		public Object put(Object key, Object value)
+		public String put(String key, String value)
 		{
 			return m_wrapper.put(key, value);
 		}
 
-		public void putAll(Map t)
+		public void putAll(Map<? extends String, ? extends String> t)
 		{
 			m_wrapper.putAll(t);
 		}
 
-		public Object remove(Object key)
+		public String remove(Object key)
 		{
 			return m_wrapper.remove(key);
 		}
@@ -1638,7 +1633,7 @@ public abstract class BaseAuthzGroupService implements AuthzGroupService, Storag
 			return m_wrapper.size();
 		}
 
-		public Collection values()
+		public Collection<String> values()
 		{
 			return m_wrapper.values();
 		}		

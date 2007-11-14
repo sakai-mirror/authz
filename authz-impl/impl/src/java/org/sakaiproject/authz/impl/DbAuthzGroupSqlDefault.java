@@ -280,7 +280,7 @@ public class DbAuthzGroupSqlDefault implements DbAuthzGroupSql
 		return "select sr.REALM_ID from SAKAI_REALM sr INNER JOIN SAKAI_REALM_PROVIDER srp on sr.REALM_KEY = srp.REALM_KEY where srp.PROVIDER_ID=?";
 	}
 
-	public String getSelectRealmIdSql(Collection azGroups)
+	public String getSelectRealmIdSql(Collection<String> azGroups)
 	{
 		String sql = "select     SR.REALM_ID " + "from       SAKAI_REALM_FUNCTION SRF "
 				+ "inner join SAKAI_REALM_RL_FN SRRF on SRF.FUNCTION_KEY = SRRF.FUNCTION_KEY "
