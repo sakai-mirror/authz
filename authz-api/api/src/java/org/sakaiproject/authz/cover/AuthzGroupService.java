@@ -24,6 +24,7 @@ package org.sakaiproject.authz.cover;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.sakaiproject.authz.api.AuthzGroup;
 import org.sakaiproject.component.cover.ComponentManager;
 
 /**
@@ -72,7 +73,7 @@ public class AuthzGroupService
 
 	public static java.lang.String AUTH_ROLE = org.sakaiproject.authz.api.AuthzGroupService.AUTH_ROLE;
 
-	public static java.util.List getAuthzGroups(java.lang.String param0, org.sakaiproject.javax.PagingPosition param1)
+	public static java.util.List<AuthzGroup> getAuthzGroups(java.lang.String param0, org.sakaiproject.javax.PagingPosition param1)
 	{
 		org.sakaiproject.authz.api.AuthzGroupService service = getInstance();
 		if (service == null) return null;
@@ -88,18 +89,18 @@ public class AuthzGroupService
 		return service.countAuthzGroups(param0);
 	}
 
-	public static Set getAuthzGroupIds(String providerId)
+	public static Set<String> getAuthzGroupIds(String providerId)
 	{
 		org.sakaiproject.authz.api.AuthzGroupService service = getInstance();
-		if (service == null) return new HashSet();
+		if (service == null) return new HashSet<String>();
 		
 		return service.getAuthzGroupIds(providerId);
 	}
 
-	public Set getProviderIds(String authzGroupId)
+	public Set<String> getProviderIds(String authzGroupId)
 	{
 		org.sakaiproject.authz.api.AuthzGroupService service = getInstance();
-		if (service == null) return new HashSet();
+		if (service == null) return new HashSet<String>();
 		
 		return service.getProviderIds(authzGroupId);
 	}
@@ -246,7 +247,7 @@ public class AuthzGroupService
 		return service.allowUnjoinGroup(param0);
 	}
 
-	public static java.util.Set getUsersIsAllowed(java.lang.String param0, java.util.Collection param1)
+	public static java.util.Set<String> getUsersIsAllowed(java.lang.String param0, java.util.Collection<String> param1)
 	{
 		org.sakaiproject.authz.api.AuthzGroupService service = getInstance();
 		if (service == null) return null;
@@ -254,8 +255,8 @@ public class AuthzGroupService
 		return service.getUsersIsAllowed(param0, param1);
 	}
 
-	public static java.util.Set getAuthzGroupsIsAllowed(java.lang.String param0, java.lang.String param1,
-			java.util.Collection param2)
+	public static java.util.Set<String> getAuthzGroupsIsAllowed(java.lang.String param0, java.lang.String param1,
+			java.util.Collection<String> param2)
 	{
 		org.sakaiproject.authz.api.AuthzGroupService service = getInstance();
 		if (service == null) return null;
@@ -263,7 +264,7 @@ public class AuthzGroupService
 		return service.getAuthzGroupsIsAllowed(param0, param1, param2);
 	}
 
-	public static java.util.Set getAllowedFunctions(java.lang.String param0, java.util.Collection param1)
+	public static java.util.Set<String> getAllowedFunctions(java.lang.String param0, java.util.Collection<String> param1)
 	{
 		org.sakaiproject.authz.api.AuthzGroupService service = getInstance();
 		if (service == null) return null;
@@ -279,7 +280,7 @@ public class AuthzGroupService
 		service.refreshUser(param0);
 	}
 
-	public static boolean isAllowed(java.lang.String param0, java.lang.String param1, java.util.Collection param2)
+	public static boolean isAllowed(java.lang.String param0, java.lang.String param1, java.util.Collection<String> param2)
 	{
 		org.sakaiproject.authz.api.AuthzGroupService service = getInstance();
 		if (service == null) return false;
@@ -303,7 +304,7 @@ public class AuthzGroupService
 		return service.getUserRole(param0, param1);
 	}
 
-	public static java.util.Map getUsersRole(java.util.Collection param0, java.lang.String param1)
+	public static java.util.Map<String, String> getUsersRole(java.util.Collection<String> param0, java.lang.String param1)
 	{
 		org.sakaiproject.authz.api.AuthzGroupService service = getInstance();
 		if (service == null) return null;

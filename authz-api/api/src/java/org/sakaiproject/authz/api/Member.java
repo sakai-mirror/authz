@@ -28,7 +28,7 @@ import java.io.Serializable;
  * Member records membership in an AuthzGroup; user, role, and flags.
  * </p>
  */
-public interface Member extends Comparable, Serializable
+public interface Member extends Comparable<Member>, Serializable
 {
 	/**
 	 * Access the user id of the member.

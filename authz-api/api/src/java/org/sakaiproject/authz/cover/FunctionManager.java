@@ -62,7 +62,7 @@ public class FunctionManager
 		manager.registerFunction(param0);
 	}
 
-	public static java.util.List getRegisteredFunctions()
+	public static java.util.List<String> getRegisteredFunctions()
 	{
 		org.sakaiproject.authz.api.FunctionManager manager = getInstance();
 		if (manager == null) return null;
@@ -70,7 +70,7 @@ public class FunctionManager
 		return manager.getRegisteredFunctions();
 	}
 
-	public static java.util.List getRegisteredFunctions(java.lang.String param0)
+	public static java.util.List<String> getRegisteredFunctions(java.lang.String param0)
 	{
 		org.sakaiproject.authz.api.FunctionManager manager = getInstance();
 		if (manager == null) return null;
