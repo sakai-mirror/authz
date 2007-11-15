@@ -965,13 +965,14 @@ public class BaseAuthzGroup implements AuthzGroup
 	/**
 	 * {@inheritDoc}
 	 */
-	public int compareTo(AuthzGroup obj)
+	public int compareTo(Object obj)
 	{
+	    if (!(obj instanceof AuthzGroup)) throw new ClassCastException();
 		// if the object are the same, say so
 		if (obj == this) return 0;
 
 		// sort based on id
-		int compare = getId().compareTo(obj.getId());
+		int compare = getId().compareTo(((AuthzGroup)obj).getId());
 
 		return compare;
 	}

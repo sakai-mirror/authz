@@ -39,7 +39,7 @@ import org.sakaiproject.user.api.User;
  * Special AuthzGroups not related to an entity have ids that begin with a "!".
  * </p>
  */
-public interface AuthzGroup extends Edit, Comparable<AuthzGroup>, Serializable
+public interface AuthzGroup extends Edit, Comparable<Object>, Serializable
 {
 	/**
 	 * Add a member to the AuthzGroup.
