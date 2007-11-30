@@ -1428,6 +1428,20 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 			fields[0] = userId;
 			fields[1] = lock;
 			fields[2] = realmId;
+			
+			// checks to see if the user has the roleswap variable set in the session
+			String roleswap = (String)sessionManager().getCurrentSession().getAttribute("roleswap" + fields[2]);
+
+            if (roleswap != null)
+            {
+            	fields[0] = roleswap;
+            	statement = "select count(1) from SAKAI_REALM_RL_FN MAINTABLE "
+        			+ "		JOIN SAKAI_REALM_ROLE ROLE ON ROLE.ROLE_KEY = MAINTABLE.ROLE_KEY "
+        			+ "		JOIN SAKAI_REALM_FUNCTION FUNCTIONS ON FUNCTIONS.FUNCTION_KEY = MAINTABLE.FUNCTION_KEY "
+        			+ "		JOIN SAKAI_REALM REALM ON REALM.REALM_KEY = MAINTABLE.REALM_KEY "
+        			+ "		where ROLE.ROLE_NAME = ? AND FUNCTIONS.FUNCTION_NAME = ? AND REALM.REALM_ID = ?";
+            	securityService().clearCache();
+            }
 
 			List resultsNew = m_sql.dbRead(statement, fields, new SqlReader()
 			{
@@ -1511,10 +1525,13 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 					+ ")";
 
 			Object[] fields = new Object[2 + (2 * realms.size())];
+			Object[] fields2 = new Object[3]; // for roleswap
 			int pos = 0;
 			for (Iterator i = realms.iterator(); i.hasNext();)
 			{
 				String role = (String) i.next();
+				if (role.startsWith("/site/")) 
+					fields2[2] = role;
 				fields[pos++] = role;
 			}
 			fields[pos++] = lock;
@@ -1524,22 +1541,54 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 				String role = (String) i.next();
 				fields[pos++] = role;
 			}
-
-			List results = m_sql.dbRead(statement, fields, new SqlReader()
-			{
-				public Object readSqlResultRecord(ResultSet result)
+			
+			// TODO: would be better to get this initially to make the code more efficient, but the realms collection does not have a common 
+			// order for the site's id which is needed to determine if the session variable exists
+			String roleswap = (String)sessionManager().getCurrentSession().getAttribute("roleswap" + fields2[2]);
+			List results = null;
+			if (roleswap != null)
+            {
+				fields2[0] = roleswap;
+				fields2[1] = lock;
+				statement = "select count(1) from SAKAI_REALM_RL_FN MAINTABLE "
+        			+ "		JOIN SAKAI_REALM_ROLE ROLE ON ROLE.ROLE_KEY = MAINTABLE.ROLE_KEY "
+        			+ "		JOIN SAKAI_REALM_FUNCTION FUNCTIONS ON FUNCTIONS.FUNCTION_KEY = MAINTABLE.FUNCTION_KEY "
+        			+ "		JOIN SAKAI_REALM REALM ON REALM.REALM_KEY = MAINTABLE.REALM_KEY "
+        			+ "		where ROLE.ROLE_NAME = ? AND FUNCTIONS.FUNCTION_NAME = ? AND REALM.REALM_ID = ?";
+				results = m_sql.dbRead(statement, fields2, new SqlReader()
 				{
-					try
+					public Object readSqlResultRecord(ResultSet result)
 					{
-						int count = result.getInt(1);
-						return new Integer(count);
+						try
+						{
+							int count = result.getInt(1);
+							return new Integer(count);
+						}
+						catch (SQLException ignore)
+						{
+							return null;
+						}
 					}
-					catch (SQLException ignore)
+				});
+            }
+			else
+			{
+				results = m_sql.dbRead(statement, fields, new SqlReader()
+				{
+					public Object readSqlResultRecord(ResultSet result)
 					{
-						return null;
+						try
+						{
+							int count = result.getInt(1);
+							return new Integer(count);
+						}
+						catch (SQLException ignore)
+						{
+							return null;
+						}
 					}
-				}
-			});
+				});
+			}
 
 			boolean rv = false;
 			int count = -1;
