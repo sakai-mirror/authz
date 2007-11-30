@@ -141,4 +141,9 @@ public interface SecurityService
 	 * Remove any SecurityAdvisors from this thread.
 	 */
 	void clearAdvisors();
+	
+	/**
+	 * Clear the security cache.
+	 */
+	void clearCache();
 }
