@@ -75,6 +75,11 @@ public class SakaiSecurityTest extends SakaiSecurity
 		return null;
 	}
 
+        public void clearCache()
+        {
+		//do nothing
+        }
+
 	public boolean isAdminToolsUser(User user) 
 	{
 		// TODO Auto-generated method stub
