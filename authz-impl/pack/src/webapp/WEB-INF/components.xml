@@ -23,7 +23,7 @@
 	</bean>
 
 	<bean id="org.sakaiproject.authz.api.SecurityService"
-			class="org.sakaiproject.authz.impl.SakaiSecurity"
+			class="org.sakaiproject.authz.impl.OncourseSecurity"
 			init-method="init"
 			destroy-method="destroy"
 			singleton="true">

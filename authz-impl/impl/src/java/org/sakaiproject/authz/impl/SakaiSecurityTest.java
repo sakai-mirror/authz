@@ -25,6 +25,7 @@ import org.sakaiproject.authz.api.AuthzGroupService;
 import org.sakaiproject.entity.api.EntityManager;
 import org.sakaiproject.memory.api.MemoryService;
 import org.sakaiproject.thread_local.api.ThreadLocalManager;
+import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
 
 /**
@@ -72,5 +73,12 @@ public class SakaiSecurityTest extends SakaiSecurity
 	protected EntityManager entityManager()
 	{
 		return null;
+	}
+	
+
+	public boolean isAdminToolsUser(User user) 
+	{
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

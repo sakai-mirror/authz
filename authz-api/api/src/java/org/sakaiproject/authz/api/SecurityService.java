@@ -146,4 +146,7 @@ public interface SecurityService
 	 * Clear the security cache.
 	 */
 	void clearCache();
+
+	public boolean isAdminToolsUser(User user);
+
 }
