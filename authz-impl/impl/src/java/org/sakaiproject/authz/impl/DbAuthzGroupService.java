@@ -1431,7 +1431,7 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 			
 			// checks to see if the user has the roleswap variable set in the session
 			String roleswap = (String)sessionManager().getCurrentSession().getAttribute("roleswap" + fields[2]);
-
+M_log.debug("RoleSwap in non-collection value: " + roleswap);
             if (roleswap != null)
             {
             	fields[0] = roleswap;
@@ -1545,6 +1545,7 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 			// TODO: would be better to get this initially to make the code more efficient, but the realms collection does not have a common 
 			// order for the site's id which is needed to determine if the session variable exists
 			String roleswap = (String)sessionManager().getCurrentSession().getAttribute("roleswap" + fields2[2]);
+M_log.debug("RoleSwap in collection value: " + roleswap);
 			List results = null;
 			if (roleswap != null)
             {
