@@ -144,14 +144,6 @@ public abstract class SakaiSecurity implements SecurityService
 
 		return isSuperUser(user.getId());
 	}
-	
-	/**
-	 * {@inheritDoc}
-	 */
-	public void clearCache()
-	{
-		m_callCache.resetCache();
-	}
 
 	/**
 	 * {@inheritDoc}
