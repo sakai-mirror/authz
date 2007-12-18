@@ -150,7 +150,6 @@ public abstract class SakaiSecurity implements SecurityService
 	 */
 	public void clearCache()
 	{
-M_log.debug("RoleSwap in the clearCache call");
 		m_callCache.resetCache();
 	}
 
