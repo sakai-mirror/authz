@@ -97,7 +97,16 @@
 				<war.bundle>true</war.bundle>
 			</properties>
 		</dependency>
-
+		<dependency>
+			<groupId>sakaiproject</groupId>
+			<artifactId>sakai-coursemanagement-api</artifactId>
+			<version>${sakai.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>sakaiproject</groupId>
+			<artifactId>sakai-component</artifactId>
+			<version>${sakai.version}</version>
+		</dependency>
 		<!-- velocity and dependencies (logkit, oro, collections) -->
 		<dependency>
 			<groupId>velocity</groupId>
