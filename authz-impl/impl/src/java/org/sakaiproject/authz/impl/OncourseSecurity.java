@@ -424,7 +424,7 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 				}
 				catch(SQLException e)
 				{
-					M_log.error("error happens when checking of user is a participant for site (block 1):" + siteId + "--" + u.getEid());
+					M_log.error("error happens when checking of user is a participant for site (block 1):" + siteId + "--" + u.getEid(), e);
 				}
 				finally
 				{
@@ -436,7 +436,7 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 						}
 						catch(SQLException sqle)
 						{
-							M_log.error("error happens when closing result (block 1):" + sqle.getMessage());
+							M_log.error("error happens when closing result (block 1):" + sqle.getMessage(), sqle);
 						}
 					}
 					if(statement != null)
@@ -447,7 +447,7 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 						}
 						catch(SQLException sqle)
 						{
-							M_log.error("error happens when closing statement (block 1):" + sqle.getMessage());
+							M_log.error("error happens when closing statement (block 1):" + sqle.getMessage(), sqle);
 						}
 					}
 					if(conn != null)
@@ -482,7 +482,7 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 			}
 			catch(SQLException e)
 			{
-				M_log.error("error happens when checking of user is a participant for site (block 2):" + siteId + "--" + u.getEid());
+				M_log.error("error happens when checking of user is a participant for site (block 2):" + siteId + "--" + u.getEid(), e);
 			}
 			finally
 			{
@@ -494,7 +494,7 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 					}
 					catch(SQLException sqle)
 					{
-						M_log.error("error happens when closing result (block 2):" + sqle.getMessage());
+						M_log.error("error happens when closing result (block 2):" + sqle.getMessage(), sqle);
 					}
 				}
 				if(statement != null)
@@ -505,7 +505,7 @@ public abstract class OncourseSecurity extends SakaiSecurity {
 					}
 					catch(SQLException sqle)
 					{
-						M_log.error("error happens when closing statement (block 2):" + sqle.getMessage());
+						M_log.error("error happens when closing statement (block 2):" + sqle.getMessage(), sqle);
 					}
 				}
 				if(conn != null)
