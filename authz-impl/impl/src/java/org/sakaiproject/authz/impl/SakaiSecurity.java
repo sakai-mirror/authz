@@ -32,13 +32,16 @@ import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.AuthzGroupService;
 import org.sakaiproject.authz.api.SecurityAdvisor;
 import org.sakaiproject.authz.api.SecurityService;
+import org.sakaiproject.entity.api.Entity;
 import org.sakaiproject.entity.api.EntityManager;
 import org.sakaiproject.entity.api.Reference;
 import org.sakaiproject.memory.api.MemoryService;
 import org.sakaiproject.memory.api.MultiRefCache;
 import org.sakaiproject.thread_local.api.ThreadLocalManager;
+import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
+import org.sakaiproject.util.StringUtil;
 
 /**
  * <p>
@@ -84,6 +87,11 @@ public abstract class SakaiSecurity implements SecurityService
 	 * @return the EntityManager collaborator.
 	 */
 	protected abstract EntityManager entityManager();
+	
+	/**
+	 * @return the SessionManager collaborator.
+	 */
+	protected abstract SessionManager sessionManager();
 
 	/**********************************************************************************************************************************************************************************************************************************************************
 	 * Configuration
@@ -141,6 +149,14 @@ public abstract class SakaiSecurity implements SecurityService
 		if (user == null) return false;
 
 		return isSuperUser(user.getId());
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	public void removeCacheObject(Object key)
+	{
+		m_callCache.remove(key);
 	}
 
 	/**
@@ -271,6 +287,18 @@ public abstract class SakaiSecurity implements SecurityService
 	{
 		// check the cache
 		String command = "unlock@" + userId + "@" + function + "@" + entityRef;
+		String[] refs = StringUtil.split(entityRef, Entity.SEPARATOR);
+		String roleswap = null;
+		String roleswapactivated = null;
+		for (int i = 0; i < refs.length; i++)
+		{
+			roleswap = (String)sessionManager().getCurrentSession().getAttribute("roleswap/site/" + refs[i]);
+			roleswapactivated = (String)sessionManager().getCurrentSession().getAttribute("roleswap/exit/" + refs[i]);
+			if (roleswap!=null || roleswapactivated!=null)
+				break;
+		}
+		if (roleswap!=null || roleswapactivated!=null)
+			removeCacheObject(command); // clearing the cache here will fix some of the rendering errors before an isAllowed function is called 
 		if (m_callCache != null)
 		{
 			final Boolean value = (Boolean) m_callCache.get(command);

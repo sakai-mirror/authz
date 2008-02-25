@@ -141,4 +141,9 @@ public interface SecurityService
 	 * Remove any SecurityAdvisors from this thread.
 	 */
 	void clearAdvisors();
+	
+	/**
+	 * Remove an object from the security cache.
+	 */
+	void removeCacheObject(Object key);
 }
