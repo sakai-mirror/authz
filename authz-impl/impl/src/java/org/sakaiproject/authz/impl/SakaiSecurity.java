@@ -37,7 +37,6 @@ import org.sakaiproject.entity.api.Reference;
 import org.sakaiproject.memory.api.MemoryService;
 import org.sakaiproject.memory.api.MultiRefCache;
 import org.sakaiproject.thread_local.api.ThreadLocalManager;
-import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
 
@@ -85,11 +84,6 @@ public abstract class SakaiSecurity implements SecurityService
 	 * @return the EntityManager collaborator.
 	 */
 	protected abstract EntityManager entityManager();
-	
-	/**
-	 * @return the SessionManager collaborator.
-	 */
-	protected abstract SessionManager sessionManager();
 
 	/**********************************************************************************************************************************************************************************************************************************************************
 	 * Configuration
@@ -147,14 +141,6 @@ public abstract class SakaiSecurity implements SecurityService
 		if (user == null) return false;
 
 		return isSuperUser(user.getId());
-	}
-	
-	/**
-	 * {@inheritDoc}
-	 */
-	public void clearCache()
-	{
-		m_callCache.resetCache();
 	}
 
 	/**
@@ -285,9 +271,6 @@ public abstract class SakaiSecurity implements SecurityService
 	{
 		// check the cache
 		String command = "unlock@" + userId + "@" + function + "@" + entityRef;
-		String roleswap = (String)sessionManager().getCurrentSession().getAttribute("roleswap" + entityRef);
-		if (roleswap!=null)
-			clearCache(); // clearing the cache here will fix some of the rendering errors before an isAllowed function is called
 		if (m_callCache != null)
 		{
 			final Boolean value = (Boolean) m_callCache.get(command);

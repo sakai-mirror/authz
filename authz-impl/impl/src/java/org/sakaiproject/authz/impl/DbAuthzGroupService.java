@@ -1429,16 +1429,6 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 			fields[0] = userId;
 			fields[1] = lock;
 			fields[2] = realmId;
-			
-			// checks to see if the user has the roleswap variable set in the session
-			String roleswap = (String)sessionManager().getCurrentSession().getAttribute("roleswap" + fields[2]);
-
-            if (roleswap != null)
-            {
-            	fields[0] = roleswap;
-            	statement = dbAuthzGroupSql.getCountRoleFunctionSql();
-            	securityService().clearCache();
-            }
 
 			List resultsNew = m_sql.dbRead(statement, fields, new SqlReader()
 			{
@@ -1498,13 +1488,10 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 			// any of the grant or role realms
 			String statement = dbAuthzGroupSql.getCountRealmRoleFunctionSql(ANON_ROLE, AUTH_ROLE, auth, inClause);
 			Object[] fields = new Object[2 + (2 * realms.size())];
-			Object[] fields2 = new Object[3]; // for roleswap
 			int pos = 0;
 			for (Iterator i = realms.iterator(); i.hasNext();)
 			{
 				String role = (String) i.next();
-				if (role.startsWith("/site/")) 
-					fields2[2] = role;
 				fields[pos++] = role;
 			}
 			fields[pos++] = lock;
@@ -1515,49 +1502,21 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 				fields[pos++] = role;
 			}
 
-			// TODO: would be better to get this initially to make the code more efficient, but the realms collection does not have a common 
-			// order for the site's id which is needed to determine if the session variable exists
-			String roleswap = (String)sessionManager().getCurrentSession().getAttribute("roleswap" + fields2[2]);
-			List results = null;
-			if (roleswap != null)
-            {
-				fields2[0] = roleswap;
-				fields2[1] = lock;
-				statement = dbAuthzGroupSql.getCountRoleFunctionSql();
-				results = m_sql.dbRead(statement, fields2, new SqlReader()
-				{
-					public Object readSqlResultRecord(ResultSet result)
-					{
-						try
-						{
-							int count = result.getInt(1);
-							return new Integer(count);
-						}
-						catch (SQLException ignore)
-						{
-							return null;
-						}
-					}
-				});
-            }
-			else
+			List results = m_sql.dbRead(statement, fields, new SqlReader()
 			{
-				results = m_sql.dbRead(statement, fields, new SqlReader()
+				public Object readSqlResultRecord(ResultSet result)
 				{
-					public Object readSqlResultRecord(ResultSet result)
+					try
 					{
-						try
-						{
-							int count = result.getInt(1);
-							return new Integer(count);
-						}
-						catch (SQLException ignore)
-						{
-							return null;
-						}
+						int count = result.getInt(1);
+						return new Integer(count);
 					}
-				});
-			}
+					catch (SQLException ignore)
+					{
+						return null;
+					}
+				}
+			});
 
 			boolean rv = false;
 			int count = -1;

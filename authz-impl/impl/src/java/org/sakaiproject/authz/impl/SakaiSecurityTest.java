@@ -25,7 +25,6 @@ import org.sakaiproject.authz.api.AuthzGroupService;
 import org.sakaiproject.entity.api.EntityManager;
 import org.sakaiproject.memory.api.MemoryService;
 import org.sakaiproject.thread_local.api.ThreadLocalManager;
-import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.user.api.UserDirectoryService;
 
 /**
@@ -71,14 +70,6 @@ public class SakaiSecurityTest extends SakaiSecurity
 	 * @return the EntityManager collaborator.
 	 */
 	protected EntityManager entityManager()
-	{
-		return null;
-	}
-	
-	/**
-	 * @return the SessionManager collaborator.
-	 */
-	protected SessionManager sessionManager()
 	{
 		return null;
 	}

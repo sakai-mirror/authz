@@ -145,12 +145,4 @@ public class SecurityService
 
 		service.clearAdvisors();
 	}
-	
-	public static void clearCache()
-	{
-		org.sakaiproject.authz.api.SecurityService service = getInstance();
-		if (service == null) return;
-		
-		service.clearCache();
-	}
 }

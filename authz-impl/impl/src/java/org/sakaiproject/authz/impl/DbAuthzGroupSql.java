@@ -38,8 +38,6 @@ public interface DbAuthzGroupSql
 	String getCountRealmRoleFunctionSql(String anonymousRole, String authorizationRole, boolean authorized, String inClause);
 
 	String getCountRealmRoleSql();
-	
-	String getCountRoleFunctionSql();
 
 	String getDeleteRealmProvider1Sql();
 
