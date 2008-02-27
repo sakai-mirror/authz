@@ -2140,7 +2140,11 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 
 			// prepare the return
 			String rv = null;
-			if ((results != null) && (!results.isEmpty()))
+			// checks to see if the user has the roleswap variable set in the session
+			String roleswap = (String)sessionManager().getCurrentSession().getAttribute("roleswap" + fields[0]);
+			if (roleswap != null)
+            	rv = roleswap;
+			else if ((results != null) && (!results.isEmpty()))
 			{
 				rv = (String) results.get(0);
 				if (results.size() > 1)
