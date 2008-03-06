@@ -1376,7 +1376,8 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 						int colCount = meta.getColumnCount();
 						if(colCount < 8)
 						{
-							M_log.error("Error in DbAuthzGroupService.readSqlResultRecord: total column less than 8!");
+							IllegalStateException ise = new IllegalStateException("Error in DbAuthzGroupService.readSqlResultRecord: total column less than 8!");
+							M_log.error(ise.getMessage(), ise);
 							return null;
 						}
 					}
