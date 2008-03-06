@@ -23,6 +23,8 @@ package org.sakaiproject.authz.impl;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
+//ONC-341
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -1363,6 +1365,27 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 		 */
 		public Object readSqlResultRecord(ResultSet result)
 		{
+			//ONC-341
+			if(result != null)
+			{
+				try
+				{
+					ResultSetMetaData meta = result.getMetaData();
+					if(meta != null)
+					{
+						int colCount = meta.getColumnCount();
+						if(colCount < 8)
+						{
+							M_log.error("Error in DbAuthzGroupService.readSqlResultRecord: total column less than 8!");
+							return null;
+						}
+					}
+				}
+				catch(SQLException e)
+				{
+					M_log.error("Error in DbAuthzGroupService.readSqlResultRecord:" + e.getMessage(), e);
+				}
+			}
 			try
 			{
 				String id = result.getString(1);
@@ -1391,7 +1414,8 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 			}
 			catch (SQLException e)
 			{
-				M_log.warn("readSqlResultRecord: " + e);
+				//ONC-341
+				M_log.warn("readSqlResultRecord: " + e, e);
 				return null;
 			}
 		}
