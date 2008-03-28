@@ -307,6 +307,27 @@ public class DbAuthzGroupSqlDefault implements DbAuthzGroupSql
 		}
 		return sql;
 	}
+	
+	public String getSelectRealmIdRoleSwapSql(Collection azGroups)
+	{
+		String sql = "select     SR.REALM_ID " + "from       SAKAI_REALM_FUNCTION SRF "
+				+ "inner join SAKAI_REALM_RL_FN SRRF on SRF.FUNCTION_KEY = SRRF.FUNCTION_KEY "
+				+ "inner join SAKAI_REALM_RL_GR SRRG on SRRF.REALM_KEY = SRRG.REALM_KEY "
+				+ "inner join SAKAI_REALM SR on SRRF.REALM_KEY = SR.REALM_KEY "
+				+ "join SAKAI_REALM_ROLE ROLE on ROLE.ROLE_KEY = SRRF.ROLE_KEY "
+				+ "where      SRF.FUNCTION_NAME = ? and SRRG.USER_ID = ? and SRRG.ACTIVE = '1' ";
+
+		if (azGroups != null)
+		{
+			sql += "and SR.REALM_ID in (";
+			for (int i = 0; i < azGroups.size() - 1; i++)
+				sql += "?,";
+		
+			sql += "?) ";
+		}
+		sql += "and ROLE.ROLE_NAME = ? "; 
+		return sql;
+	}
 
 	public String getSelectRealmProvider2Sql()
 	{

@@ -106,6 +106,8 @@ public interface DbAuthzGroupSql
 	String getSelectRealmIdSql();
 
 	String getSelectRealmIdSql(Collection azGroups);
+	
+	String getSelectRealmIdRoleSwapSql(Collection azGroups);
 
 	String getSelectRealmProvider2Sql();
 

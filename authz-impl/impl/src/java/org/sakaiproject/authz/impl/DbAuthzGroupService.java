@@ -42,6 +42,7 @@ import org.sakaiproject.authz.api.Role;
 import org.sakaiproject.db.api.SqlReader;
 import org.sakaiproject.db.api.SqlService;
 import org.sakaiproject.db.api.SqlServiceDeadlockException;
+import org.sakaiproject.entity.api.Entity;
 import org.sakaiproject.javax.PagingPosition;
 import org.sakaiproject.time.api.Time;
 import org.sakaiproject.user.api.UserNotDefinedException;
@@ -700,9 +701,26 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 			boolean auth = (userId != null) && (!userDirectoryService().getAnonymousUser().getId().equals(userId));
 			String sql = dbAuthzGroupSql.getSelectRealmIdSql(azGroups);
 			int size = 2;
+			String roleswap = null; // define the roleswap variable
 			if (azGroups != null)
 			{
 				size += azGroups.size();
+				for (Iterator i = azGroups.iterator(); i.hasNext();)
+				{
+					String[] refs = StringUtil.split(i.next().toString(), Entity.SEPARATOR); // splits the azGroups values so we can look for swapped state
+					for (int i2 = 0; i2 < refs.length; i2++)  // iterate through the groups to see if there is a swapped state in the variable
+					{
+						roleswap = (String)sessionManager().getCurrentSession().getAttribute("roleswap/site/" + refs[i2]);
+						if (roleswap!=null) // break from this loop if a swapped state is found
+							break;
+					}
+					if (roleswap!=null)
+					{
+						sql = dbAuthzGroupSql.getSelectRealmIdRoleSwapSql(azGroups);  // redefine the sql we use if there's a role swap
+						size++; // increase the "size" by 1 for our new sql
+						break; // break from the loop
+					}
+				}
 			}
 			Object[] fields = new Object[size];
 			fields[0] = lock;
@@ -713,6 +731,10 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 				for (Iterator i = azGroups.iterator(); i.hasNext();)
 				{
 					fields[pos++] = i.next();
+				}
+				if (roleswap!=null) // add in name of the role for the alternate query
+				{
+					fields[pos++] = roleswap;
 				}
 			}
 
@@ -1435,8 +1457,8 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 
             if (roleswap != null)
             {
-            	fields[0] = roleswap;
-            	statement = dbAuthzGroupSql.getCountRoleFunctionSql();
+            	fields[0] = roleswap; // set the field to the student role for the alternate sql
+            	statement = dbAuthzGroupSql.getCountRoleFunctionSql(); // set the function for our alternate sql
             }
 
 			List resultsNew = m_sql.dbRead(statement, fields, new SqlReader()

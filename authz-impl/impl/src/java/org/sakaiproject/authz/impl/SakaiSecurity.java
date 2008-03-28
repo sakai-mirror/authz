@@ -290,7 +290,7 @@ public abstract class SakaiSecurity implements SecurityService
 		String[] refs = StringUtil.split(entityRef, Entity.SEPARATOR);
 		String roleswap = null;
 		String roleswapactivated = null;
-		for (int i = 0; i < refs.length; i++)
+		for (int i = 0; i < refs.length; i++) // Checking for existence of roll swapped state
 		{
 			roleswap = (String)sessionManager().getCurrentSession().getAttribute("roleswap/site/" + refs[i]);
 			roleswapactivated = (String)sessionManager().getCurrentSession().getAttribute("roleswap/exit/" + refs[i]);
