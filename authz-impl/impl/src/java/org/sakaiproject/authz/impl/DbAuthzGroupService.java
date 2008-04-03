@@ -628,6 +628,26 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 		/**
 		 * {@inheritDoc}
 		 */
+		public List getAuthzUserGroupIds(String criteria, String user_id)
+		{
+		
+			if (criteria == null || user_id == null)
+				return null;
+
+			String statement = dbAuthzGroupSql.getSelectRealmUserGroupSql();
+			Object[] fields = new Object[2];
+			fields[0] = "%" + criteria + "%";
+
+			fields[1] = user_id;
+
+			List results = sqlService().dbRead(statement, fields, null );
+
+			return results;
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
 		public int countAuthzGroups(String criteria)
 		{
 			int rv = 0;
