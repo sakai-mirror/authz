@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
@@ -630,19 +631,30 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 		 */
 		public List getAuthzUserGroupIds(String criteria, String user_id)
 		{
-		
 			if (criteria == null || user_id == null)
-				return null;
+				return new ArrayList(); // empty list
 
-			String statement = dbAuthzGroupSql.getSelectRealmUserGroupSql();
-			Object[] fields = new Object[2];
-			fields[0] = "%" + criteria + "%";
-
-			fields[1] = user_id;
-
+			String statement = dbAuthzGroupSql.getSelectRealmUserGroup1Sql();
+			Object[] fields = new Object[1];
+			fields[0] = criteria;
 			List results = sqlService().dbRead(statement, fields, null );
-
-			return results;
+			if ( results == null || results.size() == 0 )
+				return new ArrayList(); // empty list
+			
+			String inClause = orInClause( results.size(), "SAKAI_REALM.REALM_ID" );
+			statement = dbAuthzGroupSql.getSelectRealmUserGroup2Sql( inClause );
+			fields = new Object[results.size()+1];
+			for ( int i=0; i<results.size()-1; i++ )
+			{
+				StringBuilder idBuf = new StringBuilder("/site/");
+				idBuf.append( criteria );
+				idBuf.append( "/group/" );
+				idBuf.append( results.get(i) );
+				fields[i] = idBuf.toString();
+			}
+			fields[results.size()] = user_id;
+			
+			return sqlService().dbRead(statement, fields, null );
 		}
 
 		/**
