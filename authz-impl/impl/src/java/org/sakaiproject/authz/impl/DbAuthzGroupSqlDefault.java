@@ -378,12 +378,7 @@ public class DbAuthzGroupSqlDefault implements DbAuthzGroupSql
 		return sqlBuf.toString();
 	}
 
-	public String getSelectRealmUserGroup1Sql()
-	{
-		return "SELECT GROUP_ID FROM SAKAI_SITE_GROUP WHERE SITE_ID = ?";
-	}
-	
-	public String getSelectRealmUserGroup2Sql( String inClause )
+	public String getSelectRealmUserGroupSql( String inClause )
 	{
 		StringBuilder sqlBuf = new StringBuilder();
 		sqlBuf.append("select SAKAI_REALM.REALM_ID FROM SAKAI_REALM, SAKAI_REALM_RL_GR WHERE ");

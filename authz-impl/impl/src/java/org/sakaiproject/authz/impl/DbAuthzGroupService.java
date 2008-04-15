@@ -629,30 +629,23 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 		/**
 		 * {@inheritDoc}
 		 */
-		public List getAuthzUserGroupIds(String criteria, String user_id)
+		public List getAuthzUserGroupIds(String siteid, ArrayList groupids, String userid)
 		{
-			if (criteria == null || user_id == null)
+			if (siteid == null || groupids == null || userid == null)
 				return new ArrayList(); // empty list
 
-			String statement = dbAuthzGroupSql.getSelectRealmUserGroup1Sql();
-			Object[] fields = new Object[1];
-			fields[0] = criteria;
-			List results = sqlService().dbRead(statement, fields, null );
-			if ( results == null || results.size() == 0 )
-				return new ArrayList(); // empty list
-			
-			String inClause = orInClause( results.size(), "SAKAI_REALM.REALM_ID" );
-			statement = dbAuthzGroupSql.getSelectRealmUserGroup2Sql( inClause );
-			fields = new Object[results.size()+1];
-			for ( int i=0; i<results.size()-1; i++ )
+			String inClause = orInClause( groupids.size(), "SAKAI_REALM.REALM_ID" );
+			String statement = dbAuthzGroupSql.getSelectRealmUserGroupSql( inClause );
+			Object[] fields = new Object[groupids.size()+1];
+			for ( int i=0; i<groupids.size()-1; i++ )
 			{
 				StringBuilder idBuf = new StringBuilder("/site/");
-				idBuf.append( criteria );
+				idBuf.append( siteid );
 				idBuf.append( "/group/" );
-				idBuf.append( results.get(i) );
+				idBuf.append( groupids.get(i) );
 				fields[i] = idBuf.toString();
 			}
-			fields[results.size()] = user_id;
+			fields[groupids.size()] = userid;
 			
 			return sqlService().dbRead(statement, fields, null );
 		}
