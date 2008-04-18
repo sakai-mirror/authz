@@ -35,6 +35,7 @@ import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.entity.api.Entity;
 import org.sakaiproject.entity.api.EntityManager;
 import org.sakaiproject.entity.api.Reference;
+import org.sakaiproject.event.api.EventTrackingService;
 import org.sakaiproject.memory.api.MemoryService;
 import org.sakaiproject.memory.api.MultiRefCache;
 import org.sakaiproject.thread_local.api.ThreadLocalManager;
@@ -92,6 +93,11 @@ public abstract class SakaiSecurity implements SecurityService
 	 * @return the SessionManager collaborator.
 	 */
 	protected abstract SessionManager sessionManager();
+	
+	/**
+	 * @return the EventTrackingService collaborator.
+	 */
+	protected abstract EventTrackingService eventTrackingService();
 
 	/**********************************************************************************************************************************************************************************************************************************************************
 	 * Configuration
@@ -151,14 +157,6 @@ public abstract class SakaiSecurity implements SecurityService
 		return isSuperUser(user.getId());
 	}
 	
-	/**
-	 * {@inheritDoc}
-	 */
-	public void removeCacheObject(Object key)
-	{
-		m_callCache.remove(key);
-	}
-
 	/**
 	 * {@inheritDoc}
 	 */
@@ -289,16 +287,17 @@ public abstract class SakaiSecurity implements SecurityService
 		String command = "unlock@" + userId + "@" + function + "@" + entityRef;
 		String[] refs = StringUtil.split(entityRef, Entity.SEPARATOR);
 		String roleswap = null;
-		String roleswapactivated = null;
 		for (int i = 0; i < refs.length; i++) // Checking for existence of roll swapped state
 		{
-			roleswap = (String)sessionManager().getCurrentSession().getAttribute("roleswap/site/" + refs[i]);
-			roleswapactivated = (String)sessionManager().getCurrentSession().getAttribute("roleswap/exit/" + refs[i]);
-			if (roleswap!=null || roleswapactivated!=null)
+			roleswap = (String)sessionManager().getCurrentSession().getAttribute("roleswapFlagForClearing/" + refs[i]);
+			if (roleswap!=null) // check if our flag is set
+			{
+				sessionManager().getCurrentSession().removeAttribute("roleswapFlagForClearing/" + refs[i]); // remove the session attribute so we don't repeatedly call thi
+				eventTrackingService().post(eventTrackingService().newEvent(function, "/realm/" + entityRef, true)); // this will clear the cache for the site and render the pages correctly by forcing the permissions to be rechecked
 				break;
+			}
 		}
-		if (roleswap!=null || roleswapactivated!=null)
-			removeCacheObject(command); // clearing the cache here will fix some of the rendering errors before an isAllowed function is called 
+			 
 		if (m_callCache != null)
 		{
 			final Boolean value = (Boolean) m_callCache.get(command);
