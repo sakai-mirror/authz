@@ -1639,12 +1639,13 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 			String sql = dbAuthzGroupSql.getSelectRealmRoleGroupUserCountSql(orInClause(azGroups.size(), "REALM_ID"));
 			Object[] fields = new Object[azGroups.size() + 1];
 			int pos = 0;
+			fields[pos++] = function;
+
 			for (Iterator i = azGroups.iterator(); i.hasNext();)
 			{
 				String roleRealm = (String) i.next();
 				fields[pos++] = roleRealm;
 			}
-			fields[pos++] = function;
 
 			// read the realm size counts
 			m_sql.dbRead(sql, fields, new SqlReader()
