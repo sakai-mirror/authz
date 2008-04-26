@@ -1596,12 +1596,12 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 			String sql = dbAuthzGroupSql.getSelectRealmRoleGroupUserIdSql(orInClause(realms.size(), "REALM_ID"));
 			Object[] fields = new Object[realms.size() + 1];
 			int pos = 0;
+			fields[pos++] = lock;
 			for (Iterator i = realms.iterator(); i.hasNext();)
 			{
 				String roleRealm = (String) i.next();
 				fields[pos++] = roleRealm;
 			}
-			fields[pos++] = lock;
 
 			// read the strings
 			List results = m_sql.dbRead(sql, fields, new SqlReader()
