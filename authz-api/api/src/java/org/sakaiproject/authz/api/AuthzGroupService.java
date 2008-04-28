@@ -313,7 +313,7 @@ public interface AuthzGroupService extends EntityProducer
 	 *        The function to check.
 	 * @param azGroups
 	 *        A collection of the ids of AuthzGroups to consult.
-	 * @return A Set of String arrays (userid, realm) wuth user ids per group who are allowed to perform the function in the named AuthzGroups.
+	 * @return A Set of String arrays (userid, realm) with user ids per group who are allowed to perform the function in the named AuthzGroups.
 	 */
 	Set getUsersIsAllowedByGroup(String function, Collection azGroups);
 
