@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
@@ -623,6 +624,26 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 			}
 
 			return rv;
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		public List getAuthzUserGroupIds(ArrayList authzGroupIds, String userid)
+		{
+			if (authzGroupIds == null || userid == null || authzGroupIds.size() < 1)
+				return new ArrayList(); // empty list
+
+			String inClause = orInClause( authzGroupIds.size(), "SAKAI_REALM.REALM_ID" );
+			String statement = dbAuthzGroupSql.getSelectRealmUserGroupSql( inClause );
+			Object[] fields = new Object[authzGroupIds.size()+1];
+			for ( int i=0; i<authzGroupIds.size(); i++ )
+			{
+				fields[i] = authzGroupIds.get(i);
+			}
+			fields[authzGroupIds.size()] = userid;
+			
+			return sqlService().dbRead(statement, fields, null );
 		}
 
 		/**

@@ -22,6 +22,7 @@
 package org.sakaiproject.authz.api;
 
 import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -70,6 +71,17 @@ public interface AuthzGroupService extends EntityProducer
 	 * @return The List (AuthzGroup) that meet specified criteria.
 	 */
 	List getAuthzGroups(String criteria, PagingPosition page);
+
+	/**
+	 * Access a list of AuthzGroups which contain a specified userid
+	 * 
+	 * @param authzGroupIds
+	 *        AuthzGroup selection criteria (list of AuthzGroup ids)
+	 * @param userid
+	 *        Return only groups with userid as a member
+	 * @return The List (AuthzGroup) that contain the specified userid
+	 */
+	List getAuthzUserGroupIds(ArrayList authzGroupIds, String userid);
 
 	/**
 	 * Count the AuthzGroups that meet specified criteria.

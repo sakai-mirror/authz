@@ -80,6 +80,14 @@ public class AuthzGroupService
 		return service.getAuthzGroups(param0, param1);
 	}
 
+	public static java.util.List getAuthzUserGroupIds(java.util.ArrayList param0, java.lang.String param1)
+	{
+		org.sakaiproject.authz.api.AuthzGroupService service = getInstance();
+		if (service == null) return null;
+
+		return service.getAuthzUserGroupIds(param0, param1);
+	}
+
 	public static int countAuthzGroups(java.lang.String param0)
 	{
 		org.sakaiproject.authz.api.AuthzGroupService service = getInstance();
