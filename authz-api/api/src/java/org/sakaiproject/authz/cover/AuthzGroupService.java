@@ -264,7 +264,7 @@ public class AuthzGroupService
 		return service.getUsersIsAllowed(param0, param1);
 	}
 
-	public static java.util.Set getUsersIsAllowedByGroup(java.lang.String param0, java.util.Collection param1)
+	public static java.util.Set<String[]> getUsersIsAllowedByGroup(java.lang.String param0, java.util.Collection<String> param1)
 	{
 		org.sakaiproject.authz.api.AuthzGroupService service = getInstance();
 		if (service == null) return null;
@@ -272,7 +272,7 @@ public class AuthzGroupService
 		return service.getUsersIsAllowedByGroup(param0, param1);		
 	}
 
-	public static java.util.Map getUserCountIsAllowed(java.lang.String param0, java.util.Collection param1)
+	public static java.util.Map<String,Integer> getUserCountIsAllowed(java.lang.String param0, java.util.Collection<String> param1)
 	{
 		org.sakaiproject.authz.api.AuthzGroupService service = getInstance();
 		if (service == null) return null;

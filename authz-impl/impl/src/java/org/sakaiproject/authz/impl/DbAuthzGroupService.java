@@ -1587,7 +1587,7 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 		/**
 		 * {@inheritDoc}
 		 */
-		public Set getUsersIsAllowedByGroup(String lock, Collection realms)
+		public Set<String[]> getUsersIsAllowedByGroup(String lock, Collection<String> realms)
 		{
 			final Set<String[]> usersByGroup = new HashSet<String[]>(); 
 			
@@ -1604,7 +1604,7 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 			}
 
 			// read the strings
-			List results = m_sql.dbRead(sql, fields, new SqlReader()
+			m_sql.dbRead(sql, fields, new SqlReader()
 					{
 				public Object readSqlResultRecord(ResultSet result)
 				{
@@ -1630,7 +1630,7 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 		/**
 		 * {@inheritDoc}
 		 */		
-		public Map getUserCountIsAllowed(String function, Collection azGroups)
+		public Map<String,Integer> getUserCountIsAllowed(String function, Collection<String> azGroups)
 		{
 			final Map<String, Integer> userCountByGroup = new HashMap<String, Integer>();
 			
