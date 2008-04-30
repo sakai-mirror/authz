@@ -1591,16 +1591,25 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 		{
 			final Set<String[]> usersByGroup = new HashSet<String[]>(); 
 			
-			if ((lock == null) || (realms == null) || (realms.isEmpty())) return usersByGroup;
+			if ((lock == null) || (realms != null && realms.isEmpty())) return usersByGroup;
 			
-			String sql = dbAuthzGroupSql.getSelectRealmRoleGroupUserIdSql(orInClause(realms.size(), "REALM_ID"));
-			Object[] fields = new Object[realms.size() + 1];
-			int pos = 0;
-			fields[pos++] = lock;
-			for (Iterator i = realms.iterator(); i.hasNext();)
-			{
-				String roleRealm = (String) i.next();
-				fields[pos++] = roleRealm;
+			String sql;
+			Object[] fields;
+			
+			if (realms != null) {
+				sql = dbAuthzGroupSql.getSelectRealmRoleGroupUserIdSql(orInClause(realms.size(), "REALM_ID"));
+				fields = new Object[realms.size() + 1];
+				int pos = 0;
+				fields[pos++] = lock;
+				for (Iterator i = realms.iterator(); i.hasNext();)
+				{
+					String roleRealm = (String) i.next();
+					fields[pos++] = roleRealm;
+				}
+			} else {
+				sql = dbAuthzGroupSql.getSelectRealmRoleGroupUserIdSql("true");
+				fields = new Object[1];
+				fields[0] = lock;				
 			}
 
 			// read the strings
@@ -1634,17 +1643,26 @@ public abstract class DbAuthzGroupService extends BaseAuthzGroupService
 		{
 			final Map<String, Integer> userCountByGroup = new HashMap<String, Integer>();
 			
-			if ((function == null) || (azGroups == null) || (azGroups.isEmpty())) return userCountByGroup;
+			if ((function == null) || (azGroups != null && azGroups.isEmpty())) return userCountByGroup;
 			
-			String sql = dbAuthzGroupSql.getSelectRealmRoleGroupUserCountSql(orInClause(azGroups.size(), "REALM_ID"));
-			Object[] fields = new Object[azGroups.size() + 1];
-			int pos = 0;
-			fields[pos++] = function;
+			String sql;
+			Object[] fields;
+			
+			if (azGroups != null) {
+				sql = dbAuthzGroupSql.getSelectRealmRoleGroupUserCountSql(orInClause(azGroups.size(), "REALM_ID"));
+				fields = new Object[azGroups.size() + 1];
+				int pos = 0;
+				fields[pos++] = function;
 
-			for (Iterator i = azGroups.iterator(); i.hasNext();)
-			{
-				String roleRealm = (String) i.next();
-				fields[pos++] = roleRealm;
+				for (Iterator i = azGroups.iterator(); i.hasNext();)
+				{
+					String roleRealm = (String) i.next();
+					fields[pos++] = roleRealm;
+				}				
+			} else {
+				sql = dbAuthzGroupSql.getSelectRealmRoleGroupUserCountSql("true");
+				fields = new Object[1];
+				fields[0] = function;
 			}
 
 			// read the realm size counts

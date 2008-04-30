@@ -314,8 +314,8 @@ public interface AuthzGroupService extends EntityProducer
 	 * @param function
 	 *        The function to check.
 	 * @param azGroups
-	 *        A collection of the ids of AuthzGroups to consult.
-	 * @return A Set of String arrays (userid, realm) with user ids per group who are allowed to perform the function in the named AuthzGroups.
+	 *        A collection of the ids of AuthzGroups to consult; if null, search them all (use with care).
+	 * @return A Set of String arrays (userid, realm) with user ids per group who are allowed to perform the function.
 	 */
 	Set<String[]> getUsersIsAllowedByGroup(String function, Collection<String> azGroups);
 
@@ -327,8 +327,8 @@ public interface AuthzGroupService extends EntityProducer
 	 * @param function
 	 *        The function to check.
 	 * @param azGroups
-	 *        A collection of the ids of AuthzGroups to consult.
-	 * @return A Map (authzgroupid (String) -> user count (Integer) ) of the number of users who are allowed to perform the function in the given AuthzGroups.
+	 *        A collection of the ids of AuthzGroups to search; if null, search them all (use with care).
+	 * @return A Map (authzgroupid (String) -> user count (Integer) ) of the number of users who are allowed to perform the function.
 	 */
 	Map<String,Integer> getUserCountIsAllowed(String function, Collection<String> azGroups);
 
