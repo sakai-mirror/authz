@@ -26,4 +26,14 @@ package org.sakaiproject.authz.impl;
  */
 public class DbAuthzGroupSqlDb2 extends DbAuthzGroupSqlDefault
 {
+   public String getInsertRealmFunctionSql()
+   {
+      return "insert into SAKAI_REALM_FUNCTION (FUNCTION_NAME) values (?)";
+   }
+
+   public String getInsertRealmRoleSql()
+   {
+      return "insert into SAKAI_REALM_ROLE (ROLE_NAME) values(?)";
+   }
+
 }
