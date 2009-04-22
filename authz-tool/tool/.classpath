@@ -7,11 +7,11 @@
   <classpathentry kind="var" path="M2_REPO/junit/junit/3.8.1/junit-3.8.1.jar"/>
   <classpathentry kind="var" path="M2_REPO/logkit/logkit/1.2/logkit-1.2.jar"/>
   <classpathentry kind="var" path="M2_REPO/oro/oro/2.0.8/oro-2.0.8.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-component-manager/1.0.7-SNAPSHOT/sakai-component-manager-1.0.7-SNAPSHOT.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-component-manager/1.0.6/sakai-component-manager-1.0.6.jar"/>
   <classpathentry kind="src" path="/sakai-courier-api"/>
   <classpathentry kind="src" path="/sakai-coursemanagement-api"/>
-  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-kernel-api/1.0.7-SNAPSHOT/sakai-kernel-api-1.0.7-SNAPSHOT.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-kernel-util/1.0.7-SNAPSHOT/sakai-kernel-util-1.0.7-SNAPSHOT.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-kernel-api/1.0.6/sakai-kernel-api-1.0.6.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-kernel-util/1.0.6/sakai-kernel-util-1.0.6.jar"/>
   <classpathentry kind="src" path="/sakai-velocity-tool"/>
   <classpathentry kind="src" path="/sakai-velocity-tool-api"/>
   <classpathentry kind="var" path="M2_REPO/javax/servlet/servlet-api/2.4/servlet-api-2.4.jar"/>
