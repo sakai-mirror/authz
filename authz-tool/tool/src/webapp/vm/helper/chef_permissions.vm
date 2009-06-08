@@ -1,5 +1,129 @@
 ##<!-- $Header: /cvs/sakai2/legacy/tools/src/webapp/vm/helper/chef_permissions.vm,v 1.4 2005/05/28 03:04:36 ggolden.umich.edu Exp $ -->
 <div class="portletBody">
+	<style type="text/css">
+h4,th, td{
+	cursor:pointer
+}
+h4:hover, th:hover{
+}
+
+.hasClass{
+	display:none;
+}
+.oddrow {
+	background:#eee
+}
+.checkGrid th{
+	text-align: center  !important;
+}
+.checkGrid th#permission{
+	text-align:left !important
+}
+.checkGrid label{
+	display:block;
+	width:100%;
+	height:110%;
+	padding:0;
+	margin:0;
+	text-align:center;
+	padding-top:.2em;
+}
+.checkGrid td.active{
+		background:#9cf
+	}
+	.checkGrid td.active:hover{
+		background:#9cf;
+	cursor:pointer;
+	}
+	label:hover{
+			cursor:pointer;
+	}
+.checkGrid td{
+	padding-top:.2em;
+	width:12em;
+	padding:.3em !important;
+	border:1px solid #eee;
+	cursor:pointer;
+}
+.checkGrid td:hover{
+	background: #cde;
+	cursor:pointer;
+}
+.checkGrid{
+border-collapse: collapse;
+}
+
+td.permissions {
+	width:auto;
+	padding:.3em !important;
+	white-space: nowrap;
+}
+td.permissions:hover{
+	background:inherit
+} 
+.oddrow {
+	background:#ffe
+}
+input {
+
+}
+.defaultSelected {}
+
+	</style>
+<script type="text/javascript" src="/library/js/jquery/jquery-ui/js/jquery.js"></script>
+			<script type="text/javascript">
+				$(document).ready(function(){
+				    $("table.checkGrid tr:even").addClass("oddrow");
+					$(':checked').parents('td').addClass('active');
+					$(':checked').parents('td').addClass('defaultSelected');
+				    $('input:checkbox').click(function(){
+				        if (this.checked) {
+				            $(this).parents('td').addClass('active');
+				        }
+				        else {
+				            $(this).parents('td').removeClass('active');
+				        }
+				    });
+					$('.permissions').click(function(){
+						if ( $(this).parents('tr').children('td').children('label').children('input:checked').length > 0){
+							$(this).parents('tr').children('td').children('label').children('input').attr('checked','');							
+							$(this).parents('tr').children('td').removeClass('active');
+							
+						}
+						else{
+							$(this).parents('tr').children('td').children('label').children('input').attr('checked','checked');
+							$(this).parents('tr').children('td').addClass('active');
+							$(this).removeClass('active');
+						} 
+						});
+					$('th').click(function(){
+						var col=($(this).prevAll().size());
+							if ($('.' + col +' label input:checked').length > 0){
+								$('.' + col +' label input').attr('checked','');
+								$('.' + col).removeClass('active');
+							}
+							else{
+								$('.' + col +' label input').attr('checked','checked');
+								$('.' + col).addClass('active');
+							}
+						
+						});
+
+				    $('#clearall').click(function(){
+				        $("input").attr("checked", "");
+				        $('td').removeClass('active');
+				    });
+				    $('#restdef').click(function(){
+				        $("input").attr("checked", "");
+				        $('td').removeClass('active');
+				        $(".defaultSelected").addClass("active");
+						$(".defaultSelected input ").attr("checked","checked");
+				    });
+
+				});
+			</script>
+
+	
 #if($menu)
 	#toolbar($menu)
 #end
@@ -12,9 +136,68 @@
 	<div class="instruction">
 		$!description
 	</div>
+	<div class="navPanel">
+		## if there are any groups at all
+		<div class="viewNav">
+			<div class="">
+				<label for="groupSelection">
+					$thelp.getString("per.lis.selectgrp")
+				</label>
+				<select id="groupSelection">
+						<option value ="site">$thelp.getString("per.lis.site")</option>
+
+					## for each group
+						<option value ="$groupId">$groupName</option>
+					## end 	for each group
+				</select>
+			</div>	
+		</div>
+		## end if there are any groups at all			
+		<div class="actionItem itemAction listNav">
+			<a id="clearall" href="#">$thelp.getString("per.lis.clearall")</a> | 	<a id="restdef" href="#">$thelp.getString("per.lis.restoredef")</a>
+		</div>
+	</div>
+	
 		<form action="#toolForm("$action")" method="post">
 			#if ($!roles)
-				<table class="listHier lines nolines" cellspacing="0" summary ="$thelp.getString("per.lis")" border="0">
+				<table class="listHier checkGrid" cellspacing="0" summary ="$thelp.getString("per.lis")" border="0">
+					<tr>
+						<th id="permission">
+							Permission
+						</th>
+						#foreach($role in $roles)
+							<th>$role.Id</th>
+						#end
+					</tr>
+						#foreach($lock in $abilities)
+							<tr>
+							<td  class="permissions unclicked"><h4>$thelp.getString("desc-$lock")</h4></td>
+						#set($roleCount=0)
+							#foreach($role in $roles)
+						#set($myRole = $realm.getRole($role.Id))
+						#set($roleAbilities = $rolesAbilities.get($role.Id))
+						#set($roleCount=$roleCount + 1)		
+							<td headers="$lock.substring($prefix.length())" class="$roleCount">
+								#if ($!hiddenLock.indexOf($lock) != -1 || ($lock == "site.viewRoster" && !$!editViewRoster))
+									## don't show checkbox for those roles
+								#else
+									#if($roleAbilities.contains($lock))
+										<img src="#imageLink("sakai/checkon.gif")" border="0" alt="$thelp.getString("per.alrgra")" hspace="5" />
+									#else
+										<label for="$role.Id$lock">
+										<input class="$role.Id$lock" type="checkbox" name="$role.Id$lock" id="$role.Id$lock" value="$role.Id$lock" #if(($myRole) && ($myRole.Id==$role.Id) && ($myRole.AllowedFunctions.contains($lock)))checked="checked"#end />
+										</label>
+									#end
+								#end
+							</td>
+							
+						#end
+						</tr>
+					#end
+				</table>
+				
+				
+				#*				<table class="listHier lines nolines" cellspacing="0" summary ="$thelp.getString("per.lis")" border="0">
 					<tr>
 						<th id="role">
 							$thelp.getString("per.rol")
@@ -47,6 +230,9 @@
 						</tr>
 					#end
 				</table>
+*#				
+
+
 					<div class="act">
 						<input type="submit" class="active"  name="eventSubmit_doSave" value="$thelp.getString("gen.sav")" accesskey="s" />
 						<input type="submit" name="eventSubmit_doCancel" value="$thelp.getString("gen.can")" accesskey="x" />
