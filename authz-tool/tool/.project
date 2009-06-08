@@ -1,12 +1,7 @@
 <projectDescription>
   <name>sakai-authz-tool</name>
   <comment/>
-  <projects>
-    <project>sakai-courier-api</project>
-    <project>sakai-coursemanagement-api</project>
-    <project>sakai-velocity-tool</project>
-    <project>sakai-velocity-tool-api</project>
-  </projects>
+  <projects/>
   <buildSpec>
     <buildCommand>
       <name>org.eclipse.jdt.core.javabuilder</name>
