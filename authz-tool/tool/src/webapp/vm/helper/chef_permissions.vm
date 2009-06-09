@@ -145,11 +145,11 @@ input {
 					<label for="groupSelection">
 						$thelp.getString("per.lis.selectgrp")
 					</label>
-					$viewRealmId<select id="authzGroupSelection" name="authzGroupSelection" onchange="blur();document.viewForm.submit();">
+					<select id="authzGroupSelection" name="authzGroupSelection" onchange="blur();document.viewForm.submit();">
 						<option value ="$siteRef" #if ($!viewRealmId.equals($!siteId)) selected = "selected" #end>$thelp.getString("per.lis.site")</option>
 
 						## for each group
-						#foreach ($group in $!groups)
+					 #foreach ($group in $!groups)
 							<option value ="$group.Reference" #if ($!viewRealmId.equals($group.Reference)) selected = "selected" #end>$group.Title</option>
 						#end
 						## end 	for each group

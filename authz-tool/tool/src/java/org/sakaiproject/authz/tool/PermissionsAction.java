@@ -50,6 +50,7 @@ import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.entity.api.Reference;
 import org.sakaiproject.entity.cover.EntityManager;
 import org.sakaiproject.event.api.SessionState;
+import org.sakaiproject.site.api.Group;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.util.ResourceLoader;
@@ -183,6 +184,15 @@ public class PermissionsAction
 			Collection groups = site.getGroups();
 			if (groups != null && !groups.isEmpty())
 			{
+				Iterator iGroups = groups.iterator();
+				for(; iGroups.hasNext();)
+				{
+					Group group = (Group) iGroups.next();
+					if (!AuthzGroupService.allowUpdate(siteService.siteGroupReference(site.getId(), group.getId())))
+					{
+						iGroups.remove();
+					}
+				}
 				context.put("groups", groups);
 			}
 				
@@ -239,10 +249,10 @@ public class PermissionsAction
 			{
 				String desc = (String) function;
 				String descKey = "desc-" + function;
-				if (rb.containsKey(descKey))
+				if (rb.keySet().contains(descKey))
 				{
 					// use function description
-					desc = rb.getString("desc-" + function);
+					desc = rb.getString(descKey);
 				}
 
 				functionDescriptions.put((String) function, desc);
