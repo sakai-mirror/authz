@@ -250,12 +250,12 @@ public class PermissionsAction
 			// get function description
 
 			/** Resource bundle using current language locale */
-			Object pRb = state.getAttribute(STATE_RESOURCE_LOADER);
+			ResourceLoader prb = new ResourceLoader("permissions");
 			
 			// output permission descriptions
-			if (pRb != null && ( pRb instanceof HashMap) )
+			if (prb != null)
 			{
-				Set keySet = ((HashMap) pRb).keySet();
+				Set keySet = prb.keySet();
 				Hashtable<String, String> functionDescriptions = new Hashtable<String, String>();
 				for(Object function : functions)
 				{
@@ -264,12 +264,13 @@ public class PermissionsAction
 					if (keySet.contains(descKey))
 					{
 						// use function description
-						desc = (String) ((HashMap) pRb).get(descKey);
+						desc = (String) prb.get(descKey);
 					}
 	
 					functionDescriptions.put((String) function, desc);
 				}
 				context.put("functionDescriptions", functionDescriptions);
+			
 			}
 		}
 
