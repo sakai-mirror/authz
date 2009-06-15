@@ -227,7 +227,9 @@
 							<tr>
 							<td  class="permissionDescription unclicked">
 								<a href="#" title="$thelp.getString("per.lis.perm.title")">
-									$functionDescriptions.get($lock)
+									#set($desc = $lock)
+									#set($desc = $!functionDescriptions.get($lock))
+									$desc
 								</a>
 							</td>
 						#set($roleCount=0)

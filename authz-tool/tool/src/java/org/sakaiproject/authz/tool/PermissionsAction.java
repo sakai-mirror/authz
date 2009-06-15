@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
@@ -97,6 +98,9 @@ public class PermissionsAction
 
 	/** State attribute for storing the abilities of each role for this resource. */
 	private static final String STATE_ROLE_ABILITIES = "permission.rolesAbilities";
+	
+	/** State attribute for loading bundle files from the invoking project */
+	public static final String STATE_RESOURCE_LOADER = "resource.loader";
 
 	/** Modes. */
 	public static final String MODE_MAIN = "main";
@@ -244,20 +248,29 @@ public class PermissionsAction
 			
 
 			// get function description
-			Hashtable<String, String> functionDescriptions = new Hashtable<String, String>();
-			for(Object function : functions)
-			{
-				String desc = (String) function;
-				String descKey = "desc-" + function;
-				if (rb.keySet().contains(descKey))
-				{
-					// use function description
-					desc = rb.getString(descKey);
-				}
 
-				functionDescriptions.put((String) function, desc);
+			/** Resource bundle using current language locale */
+			Object pRb = state.getAttribute(STATE_RESOURCE_LOADER);
+			
+			// output permission descriptions
+			if (pRb != null && ( pRb instanceof HashMap) )
+			{
+				Set keySet = ((HashMap) pRb).keySet();
+				Hashtable<String, String> functionDescriptions = new Hashtable<String, String>();
+				for(Object function : functions)
+				{
+					String desc = (String) function;
+					String descKey = "desc-" + function;
+					if (keySet.contains(descKey))
+					{
+						// use function description
+						desc = (String) ((HashMap) pRb).get(descKey);
+					}
+	
+					functionDescriptions.put((String) function, desc);
+				}
+				context.put("functionDescriptions", functionDescriptions);
 			}
-			context.put("functionDescriptions", functionDescriptions);
 		}
 
 		// in state is the description of the edit
