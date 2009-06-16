@@ -87,7 +87,7 @@ public class PermissionsAction
 	/** State attributes for storing the realm being edited. */
 	private static final String STATE_REALM_EDIT = "permission.realm";
 	
-	/** State attributes for storing the current selectd realm being edited. */
+	/** State attributes for storing the current selected realm being edited. */
 	private static final String STATE_VIEW_REALM_EDIT = "permission.view.realm";
 
 	/** State attributes for storing the abilities, filtered by the prefix. */
@@ -99,8 +99,11 @@ public class PermissionsAction
 	/** State attribute for storing the abilities of each role for this resource. */
 	private static final String STATE_ROLE_ABILITIES = "permission.rolesAbilities";
 	
-	/** State attribute for loading bundle files from the invoking project */
-	public static final String STATE_RESOURCE_LOADER = "resource.loader";
+	/** State attribute for permission description */
+	public static final String STATE_PERMISSION_DESCRIPTIONS = "permission.descriptions";
+	
+	/** the prefix to permission title for permission description entry in bundle file */
+	public static final String PREFIX_PERMISSION_DESCRIPTION = "desc-";
 
 	/** Modes. */
 	public static final String MODE_MAIN = "main";
@@ -268,23 +271,20 @@ public class PermissionsAction
 			state.setAttribute(STATE_ABILITIES, nFunctions);
 			context.put("abilities", nFunctions);
 			
-			// get function description
-			/** Resource bundle using current language locale */
-			ResourceLoader prb = new ResourceLoader("permissions");
-			
+			// get function description from passed in HashMap
 			// output permission descriptions
-			if (prb != null)
+			HashMap<String, String> functionDescriptions = (HashMap<String, String>) state.getAttribute(STATE_PERMISSION_DESCRIPTIONS);
+			if (functionDescriptions != null)
 			{
-				Set keySet = prb.keySet();
-				Hashtable<String, String> functionDescriptions = new Hashtable<String, String>();
+				Set keySet = functionDescriptions.keySet();
 				for(Object function : functions)
 				{
 					String desc = (String) function;
-					String descKey = "desc-" + function;
+					String descKey = PREFIX_PERMISSION_DESCRIPTION + function;
 					if (keySet.contains(descKey))
 					{
 						// use function description
-						desc = (String) prb.get(descKey);
+						desc = (String) functionDescriptions.get(descKey);
 					}
 	
 					functionDescriptions.put((String) function, desc);

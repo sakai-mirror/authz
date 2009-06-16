@@ -141,7 +141,7 @@ public class PermissionsHelperAction extends VelocityPortletPaneledAction
 		state.setAttribute(PermissionsAction.STATE_PREFIX, prefix);
 
 		// ... set the ResourceLoader object
-		state.setAttribute(PermissionsAction.STATE_RESOURCE_LOADER, toolSession.getAttribute("resourceLoader"));
+		state.setAttribute(PermissionsAction.STATE_PERMISSION_DESCRIPTIONS, toolSession.getAttribute("permissionDescriptions"));
 		
 		// start the helper
 		state.setAttribute(PermissionsAction.STATE_MODE, PermissionsAction.MODE_MAIN);
