@@ -192,7 +192,8 @@ public class PermissionsAction
 				for(; iGroups.hasNext();)
 				{
 					Group group = (Group) iGroups.next();
-					if (!AuthzGroupService.allowUpdate(siteService.siteGroupReference(site.getId(), group.getId())))
+					// need to either have realm update permission on the group level or better at the site level
+					if (!AuthzGroupService.allowUpdate(group.getReference()) && !AuthzGroupService.allowUpdate(site.getReference()))
 					{
 						iGroups.remove();
 					}
@@ -210,7 +211,7 @@ public class PermissionsAction
 		AuthzGroup viewEdit = (AuthzGroup) state.getAttribute(STATE_VIEW_REALM_EDIT);
 		if (viewEdit == null)
 		{
-			if (AuthzGroupService.allowUpdate(realmRolesId))
+			if (AuthzGroupService.allowUpdate(realmRolesId) || AuthzGroupService.allowUpdate(siteService.siteReference(siteId)))
 			{
 				try
 				{
@@ -243,12 +244,31 @@ public class PermissionsAction
 		{
 			// get all functions prefixed with our prefix
 			functions = FunctionManager.getRegisteredFunctions(prefix);
-
-			state.setAttribute(STATE_ABILITIES, functions);
+		}
+		
+		if (functions != null && !functions.isEmpty())
+		{
+			List<String> nFunctions = new Vector<String>();
+			if (!realmRolesId.equals(realmId))
+			{
+				// editing groups within site, need to filter out those permissions only applicable to site level
+				for (Iterator iFunctions = functions.iterator(); iFunctions.hasNext();)
+				{
+					String function = (String) iFunctions.next();
+					if (function.indexOf("all.groups") == -1)
+					{
+						nFunctions.add(function);
+					}
+				}
+			}
+			else
+			{
+				nFunctions.addAll(functions);
+			}
+			state.setAttribute(STATE_ABILITIES, nFunctions);
+			context.put("abilities", nFunctions);
 			
-
 			// get function description
-
 			/** Resource bundle using current language locale */
 			ResourceLoader prb = new ResourceLoader("permissions");
 			
@@ -323,7 +343,6 @@ public class PermissionsAction
 		context.put("realm", edit);
 		context.put("viewRealm", viewEdit);
 		context.put("prefix", prefix);
-		context.put("abilities", functions);
 		context.put("description", description);
 		if (roles.size() > 0)
 		{
