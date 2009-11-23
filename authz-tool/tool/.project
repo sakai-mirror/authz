@@ -3,7 +3,6 @@
   <comment/>
   <projects>
     <project>sakai-courier-api</project>
-    <project>sakai-coursemanagement-api</project>
     <project>sakai-velocity-tool</project>
     <project>sakai-velocity-tool-api</project>
   </projects>
