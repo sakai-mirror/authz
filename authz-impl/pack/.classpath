@@ -1,0 +1,9 @@
+<classpath>
+  <classpathentry kind="output" path="m2-target/classes"/>
+  <classpathentry kind="var" path="M2_REPO/junit/junit/3.8.1/junit-3.8.1.jar"/>
+  <classpathentry kind="src" path="/sakai-authz-impl"/>
+  <classpathentry kind="src" path="/sakai-db-storage"/>
+  <classpathentry kind="src" path="/sakai-entity-util"/>
+  <classpathentry kind="src" path="/sakai-util"/>
+  <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+</classpath>

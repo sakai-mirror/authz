@@ -1,0 +1,26 @@
+<projectDescription>
+  <name>sakai-authz-tool</name>
+  <comment/>
+  <projects>
+    <project>sakai-authz-api</project>
+    <project>sakai-component</project>
+    <project>sakai-courier-api</project>
+    <project>sakai-coursemanagement-api</project>
+    <project>sakai-entity-api</project>
+    <project>sakai-event-api</project>
+    <project>sakai-tool-api</project>
+    <project>sakai-user-api</project>
+    <project>sakai-util</project>
+    <project>sakai-util-api</project>
+    <project>sakai-velocity-tool</project>
+    <project>sakai-velocity-tool-api</project>
+  </projects>
+  <buildSpec>
+    <buildCommand>
+      <name>org.eclipse.jdt.core.javabuilder</name>
+    </buildCommand>
+  </buildSpec>
+  <natures>
+    <nature>org.eclipse.jdt.core.javanature</nature>
+  </natures>
+</projectDescription>

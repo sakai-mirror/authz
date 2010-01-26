@@ -1,0 +1,18 @@
+<projectDescription>
+  <name>sakai-authz-pack</name>
+  <comment/>
+  <projects>
+    <project>sakai-authz-impl</project>
+    <project>sakai-db-storage</project>
+    <project>sakai-entity-util</project>
+    <project>sakai-util</project>
+  </projects>
+  <buildSpec>
+    <buildCommand>
+      <name>org.eclipse.jdt.core.javabuilder</name>
+    </buildCommand>
+  </buildSpec>
+  <natures>
+    <nature>org.eclipse.jdt.core.javanature</nature>
+  </natures>
+</projectDescription>
