@@ -10,7 +10,7 @@
 		#if ($alertMessage)<div class="alertMessage">$thelp.getString("gen.alert") $validator.escapeHtml($alertMessage)</div><div class="clear"></div>#end
 
 	<div class="instruction">
-		$!description
+	     	$validator.escapeHtml($!description)
 	</div>
 		<form action="#toolForm("$action")" method="post">
 			#if ($!roles)
