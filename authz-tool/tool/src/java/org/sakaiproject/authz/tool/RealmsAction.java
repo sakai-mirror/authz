@@ -205,8 +205,12 @@ public class RealmsAction extends PagedResourceActionII
 		// put all realms into the context
 		context.put("realms", realms);
 
-		int pageSize = Integer.valueOf(state.getAttribute(STATE_PAGESIZE).toString()).intValue();
-		int currentPageNubmer = Integer.valueOf(state.getAttribute(STATE_CURRENT_PAGE).toString()).intValue();
+		// defaults to page size of 20
+		int pageSize = state.getAttribute(STATE_PAGESIZE) != null ? Integer.valueOf(state.getAttribute(STATE_PAGESIZE).toString()).intValue() : 20;
+		
+		// defaults to page 1
+		int currentPageNubmer = state.getAttribute(STATE_CURRENT_PAGE) != null ? Integer.valueOf(state.getAttribute(STATE_CURRENT_PAGE).toString()).intValue() : 1;
+		
 		int startNumber = pageSize * (currentPageNubmer - 1) + 1;
 		int endNumber = pageSize * currentPageNubmer;
 
@@ -292,7 +296,7 @@ public class RealmsAction extends PagedResourceActionII
 		// build the menu
 		// we need the form fields for the remove...
 		Menu bar = new MenuImpl();
-		if (AuthzGroupService.allowRemove(realm.getId()))
+		if (realm != null && AuthzGroupService.allowRemove(realm.getId()))
 		{
 			bar.add(new MenuEntry(rb.getString("realm.remove"), null, true, MenuItem.CHECKED_NA, "doRemove", "realm-form"));
 		}
@@ -356,7 +360,8 @@ public class RealmsAction extends PagedResourceActionII
 
 		// get all roles
 		List allRoles = new Vector();
-		allRoles.addAll(realm.getRoles());
+		if (realm != null)
+			allRoles.addAll(realm.getRoles());
 		Collections.sort(allRoles);
 		context.put("allRoles", allRoles);
 
@@ -387,7 +392,8 @@ public class RealmsAction extends PagedResourceActionII
 
 		// get all roles
 		List allRoles = new Vector();
-		allRoles.addAll(realm.getRoles());
+		if (realm != null)
+			allRoles.addAll(realm.getRoles());
 		Collections.sort(allRoles);
 		context.put("allRoles", allRoles);
 
@@ -415,7 +421,8 @@ public class RealmsAction extends PagedResourceActionII
 
 		// get all roles
 		List allRoles = new Vector();
-		allRoles.addAll(realm.getRoles());
+		if (realm != null)
+			allRoles.addAll(realm.getRoles());
 		Collections.sort(allRoles);
 		context.put("allRoles", allRoles);
 
@@ -438,15 +445,20 @@ public class RealmsAction extends PagedResourceActionII
 		context.put("user", user);
 
 		// get this user's role - only if not provided
-		Member grant = realm.getMember(user.getId());
-		if ((grant != null) && (!grant.isProvided()) && (grant.getRole() != null))
+		if (realm != null)
 		{
-			context.put("roles", grant.getRole());
+			Member grant = realm.getMember(user.getId());
+			context.put("grant", grant);
+			if ((grant != null) && (!grant.isProvided()) && (grant.getRole() != null))
+			{
+				context.put("roles", grant.getRole());
+			}
 		}
 
 		// get all roles
 		List allRoles = new Vector();
-		allRoles.addAll(realm.getRoles());
+		if (realm != null)
+			allRoles.addAll(realm.getRoles());
 		Collections.sort(allRoles);
 		context.put("allRoles", allRoles);
 
@@ -717,25 +729,27 @@ public class RealmsAction extends PagedResourceActionII
 
 		// get the realm
 		AuthzGroup realm = (AuthzGroup) state.getAttribute("realm");
-
-		// remove the realm
-		try
+		if (realm != null)
 		{
-			AuthzGroupService.removeAuthzGroup(realm);
+			// remove the realm
+			try
+			{
+				AuthzGroupService.removeAuthzGroup(realm);
+			}
+			catch (AuthzPermissionException e)
+			{
+				addAlert(state, rb.getString("realm.notpermis2") + " " + realm.getId());
+			}
+	
+			// cleanup
+			cleanState(state);
+	
+			// go to main mode
+			state.removeAttribute("mode");
+	
+			// make sure auto-updates are enabled
+			enableObserver(state);
 		}
-		catch (AuthzPermissionException e)
-		{
-			addAlert(state, rb.getString("realm.notpermis2") + " " + realm.getId());
-		}
-
-		// cleanup
-		cleanState(state);
-
-		// go to main mode
-		state.removeAttribute("mode");
-
-		// make sure auto-updates are enabled
-		enableObserver(state);
 
 	} // doRemove_confirmed
 
@@ -858,8 +872,11 @@ public class RealmsAction extends PagedResourceActionII
 
 		// get the role
 		AuthzGroup realm = (AuthzGroup) state.getAttribute("realm");
-		Role role = realm.getRole(id);
-		state.setAttribute("role", role);
+		if (realm != null)
+		{
+			Role role = realm.getRole(id);
+			state.setAttribute("role", role);
+		}
 
 	} // doEdit_role
 
@@ -872,15 +889,17 @@ public class RealmsAction extends PagedResourceActionII
 
 		AuthzGroup realm = (AuthzGroup) state.getAttribute("realm");
 		Role role = (Role) state.getAttribute("role");
-
-		// remove the role (no confirm)
-		realm.removeRole(role.getId());
-
-		// done with the role
-		state.removeAttribute("role");
-
-		// return to edit mode
-		state.setAttribute("mode", "edit");
+		if (realm != null && role != null)
+		{
+			// remove the role (no confirm)
+			realm.removeRole(role.getId());
+	
+			// done with the role
+			state.removeAttribute("role");
+	
+			// return to edit mode
+			state.setAttribute("mode", "edit");
+		}
 
 	} // doRemove_role
 
@@ -979,7 +998,7 @@ public class RealmsAction extends PagedResourceActionII
 
 		// we are setting for either a new role or this role
 		Role role = (Role) state.getAttribute("role");
-		if (role == null)
+		if (realm != null && role == null)
 		{
 			// read the form
 			String id = StringUtil.trimToNull(data.getParameters().getString("id"));
@@ -1052,15 +1071,18 @@ public class RealmsAction extends PagedResourceActionII
 			return false;
 		}
 
-		// create the role
-		try
+		if (realm != null)
 		{
-			realm.addRole(id, role);
-		}
-		catch (RoleAlreadyDefinedException e)
-		{
-			addAlert(state, rb.getString("realm.arole") + id + rb.getString("realm.defined"));
-			return false;
+			// create the role
+			try
+			{
+				realm.addRole(id, role);
+			}
+			catch (RoleAlreadyDefinedException e)
+			{
+				addAlert(state, rb.getString("realm.arole") + id + rb.getString("realm.defined"));
+				return false;
+			}
 		}
 
 		return true;
@@ -1121,15 +1143,18 @@ public class RealmsAction extends PagedResourceActionII
 
 		// get the realm
 		AuthzGroup realm = (AuthzGroup) state.getAttribute("realm");
-
-		// clear out this user's settings
-		realm.removeMember(user.getId());
-
-		// done with the user
-		state.removeAttribute("user");
-
-		// return to edit mode
-		state.setAttribute("mode", "edit");
+		
+		if (realm != null && user != null)
+		{
+			// clear out this user's settings
+			realm.removeMember(user.getId());
+	
+			// done with the user
+			state.removeAttribute("user");
+	
+			// return to edit mode
+			state.setAttribute("mode", "edit");
+		}
 
 	} // doRemove_user
 
@@ -1200,21 +1225,24 @@ public class RealmsAction extends PagedResourceActionII
 		// get the realm
 		AuthzGroup realm = (AuthzGroup) state.getAttribute("realm");
 
-		// if the user is set to have the same role the user already has, do nothing
-		Member grant = realm.getMember(user.getId());
-
-		// if no change, change nothing
-		if ((roles == null) && ((grant == null) || (grant.isProvided()))) return true;
-		if ((roles != null) && (grant != null) && (grant.getRole().getId().equals(roles)) && !grant.isProvided()) return true;
-
-		// clear out this user's settings
-		realm.removeMember(user.getId());
-
-		// if there's a role, give it
-		if (roles != null)
+		if (realm != null)
 		{
-			// TODO: active, provided
-			realm.addMember(user.getId(), roles, true, false);
+			// if the user is set to have the same role the user already has, do nothing
+			Member grant = realm.getMember(user.getId());
+	
+			// if no change, change nothing
+			if ((roles == null) && ((grant == null) || (grant.isProvided()))) return true;
+			if ((roles != null) && (grant != null) && (grant.getRole().getId().equals(roles)) && !grant.isProvided()) return true;
+
+			// clear out this user's settings
+			realm.removeMember(user.getId());
+	
+			// if there's a role, give it
+			if (roles != null)
+			{
+				// TODO: active, provided
+				realm.addMember(user.getId(), roles, true, false);
+			}
 		}
 
 		return true;
