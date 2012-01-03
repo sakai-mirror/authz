@@ -13,9 +13,9 @@
   <version>2.9-SNAPSHOT</version>
   <packaging>pom</packaging>
   <scm>
-    <connection>scm:svn:https://source.sakaiproject.org/svn/authz/branches/sakai-2.9.0-b01</connection>
-    <developerConnection>scm:svn:https://source.sakaiproject.org/svn/authz/branches/sakai-2.9.0-b01</developerConnection>
-    <url>https://source.sakaiproject.org/svn/authz/branches/sakai-2.9.0-b01</url>
+    <connection>scm:svn:https://source.sakaiproject.org/svn/authz/branches/sakai-2.9.x</connection>
+    <developerConnection>scm:svn:https://source.sakaiproject.org/svn/authz/branches/sakai-2.9.x</developerConnection>
+    <url>https://source.sakaiproject.org/svn/authz/branches/sakai-2.9.x</url>
   </scm>
   <modules>
     <module>authz-tool/tool</module>
